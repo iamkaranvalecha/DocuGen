@@ -6,14 +6,14 @@ import { scanRepository } from './logic';
 // Get the workspace configuration
 const config = vscode.workspace.getConfiguration('docugen');
 
-let defaultDocumentFileName: string = config.get('defaultDocumentFileName') ?? 'Documentation.md';
+let defaultDocumentFileName: string = config.get('defaultDocumentFileName') ?? 'DocuGen';
+let defaultExtension: string = '.md';
 let includedItemsSettingName: string = 'includedItems';
 let excludedItemsSettingName: string = 'excludedItems';
 let excludedExtensionsSettingName: string = 'excludedExtensions';
 
-let masterExcludeItemsList: string[] = ['node_modules', '.vscode', '.git', '.gitignore'];
+let masterExcludeItemsList: string[] = [defaultDocumentFileName + defaultExtension, 'node_modules', '.vscode', '.git', '.gitignore'];
 let excludeItemConfig = config.get(excludedItemsSettingName, [])
-console.log(typeof (excludeItemConfig))
 for (const item of excludeItemConfig)
 	if (item != '' && !masterExcludeItemsList.includes(item))
 		masterExcludeItemsList.push(item)
@@ -21,7 +21,6 @@ config.update(excludedItemsSettingName, masterExcludeItemsList, vscode.Configura
 
 let masterExcludeExtensionList: string[] = ['.python', '.env'];
 let excludeExtensionListConfig = config.get(excludedExtensionsSettingName, [])
-console.log(typeof (excludeExtensionListConfig))
 for (const item of excludeExtensionListConfig)
 	if (item != '' && !masterExcludeExtensionList.includes(item))
 		masterExcludeExtensionList.push(item)
@@ -90,7 +89,6 @@ export function activate(context: vscode.ExtensionContext) {
 
 			quickPick.selectedItems = matchingItems;  // Pre-select the item(s)
 			quickPick.onDidAccept(async () => {
-				console.log('onDidAccept called')
 				const selectedItems = quickPick.selectedItems;
 				if (selectedItems.length > 0) {
 					for (const item of selectedItems || []) {
@@ -131,41 +129,38 @@ export function activate(context: vscode.ExtensionContext) {
 						if (!itemsToBeIncluded.includes(item))
 							return item
 					})
-					config.update(excludedItemsSettingName, updateExcludeListAgainstSelectionOfUser, vscode.ConfigurationTarget.Workspace)
-					config.update(excludedExtensionsSettingName, masterExcludeExtensionList, vscode.ConfigurationTarget.Workspace)
+
+					vscode.window.withProgress({
+						location: vscode.ProgressLocation.Notification, // Show as a notification
+						title: "Generating Documentation using DocuGen", // Title of the progress notification
+					}, async (progress, token) => {
+						try {
+							// Simulate showing initial progress
+							progress.report({ message: "Scanning repository for files..." });
+	
+							await scanRepository(workspaceFolder, updateExcludeListAgainstSelectionOfUser, masterExcludeExtensionList, defaultDocumentFileName, progress);
+	
+							config.update(excludedItemsSettingName, updateExcludeListAgainstSelectionOfUser, vscode.ConfigurationTarget.Workspace)
+							config.update(excludedExtensionsSettingName, masterExcludeExtensionList, vscode.ConfigurationTarget.Workspace)
+
+							// Notify the user with the result of the operation
+							progress.report({ message: "Please verify the documentation" });
+	
+						} catch (error) {
+							// Handle errors if the method throws an exception
+							vscode.window.showErrorMessage(`An error occurred: ${error}`);
+						}
+					});
 				}
 				else {
 					vscode.window.showInformationMessage('No item selected.');
 				}
 
 				quickPick.dispose();  // Always dispose of the quickPick once done.
-
-				// Proceed with documentation generation based on the selected level
-				let excludeItemConfig = config.get(excludedItemsSettingName, [])
-				let excludeExtensionListConfig = config.get(excludedExtensionsSettingName, [])
-				vscode.window.withProgress({
-					location: vscode.ProgressLocation.Notification, // Show as a notification
-					title: "Generating Documentation using DocuGen", // Title of the progress notification
-				}, async (progress, token) => {
-					try {
-						// Simulate showing initial progress
-						progress.report({ message: "Scanning repository for files..." });
-						
-						await scanRepository(workspaceFolder, excludeItemConfig, excludeExtensionListConfig, defaultDocumentFileName, progress);
-						
-						// Notify the user with the result of the operation
-						progress.report({ message: "Please verify the documentation" });
-
-					} catch (error) {
-						// Handle errors if the method throws an exception
-						vscode.window.showErrorMessage(`An error occurred: ${error}`);
-					}
-				});
 			});
 
 			quickPick.show();
 		}
-
 	});
 
 	context.subscriptions.push(scan);
