@@ -2,163 +2,201 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 import { scanRepository } from './logic';
-import * as fs from 'fs';
-
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
+	// Get the workspace configuration
+	const config = vscode.workspace.getConfiguration('docugen');
+	
+	let defaultDocumentFileName: string = config.get('defaultDocumentFileName') ?? 'Documentation.md';
+	
+	let masterExcludeItemsList: string[] = ['node_modules', '.vscode', '.git', '.gitignore'];
+	let excludeItemConfig: string[] = config.get('excludedItems') || []
+	for(const item in excludeItemConfig)
+		if(item != '' && !masterExcludeItemsList.includes(item))
+			masterExcludeItemsList.push(item)
+	config.update('excludedItems', masterExcludeItemsList, vscode.ConfigurationTarget.Workspace)
+	
+	let masterExcludeExtensionList: string[] = ['.python', '.env'];
+	let excludeExtensionListConfig = config.get('excludedExtensions') || []
+	for(const item in excludeExtensionListConfig)
+		if(item != '' && !masterExcludeExtensionList.includes(item))
+			masterExcludeExtensionList.push(item)
+	config.update('excludedExtensions', masterExcludeExtensionList, vscode.ConfigurationTarget.Workspace)
+	
+	const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
 
 	const scan = vscode.commands.registerCommand('docugen.scanRepository', async () => {
-		const levels = ['File Level'];
-		const level = await vscode.window.showQuickPick(levels, {
-		  placeHolder: 'Select the level to document'
-		});
-		
-		if (level) {
-			let masterExcludeItemsList: string[] = [];
-			let masterExcludeExtensionList: string[] = [];
-			
+		if (workspaceFolder != undefined) {
 			// Read .gitignore file if present & exclude the folders & extensions
-			const gitIgnorePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath + '/.gitignore';
+			const gitIgnorePath = workspaceFolder + '/.gitignore';
 			let gitIgnoreContent = '';
 			if (gitIgnorePath) {
 				try {
 					gitIgnoreContent = await vscode.workspace.fs.readFile(vscode.Uri.file(gitIgnorePath)).then(content => {
 						return Buffer.from(content).toString();
 					});
+					const gitExcludeItemsList = gitIgnoreContent
+						.split('\n')
+						.filter(line => line.trim().startsWith('/') || line.trim().endsWith('/'))
+						.map(folder => folder.trim())
+						.filter(folder => !masterExcludeExtensionList.includes(folder.trim()));
+
+					// Remove duplicates by converting to a Set
+					for (const item of gitExcludeItemsList) {
+						if (!masterExcludeItemsList.includes(item.trim()))
+							masterExcludeItemsList.push(item.trim());
+					}
+
+					const gitExcludeExtensionList = gitIgnoreContent.split('\n').filter(line => line.trim().startsWith('.')).map(ext => ext.trim());
+
+					for (const item of gitExcludeExtensionList) {
+						if (!masterExcludeExtensionList.includes(item.trim()))
+							masterExcludeExtensionList.push(item.trim());
+					}
 				} catch (error) {
 					console.log('No .gitignore file found');
 				}
 			}
 
-			// Create exclusion list based on .gitignore file
-			masterExcludeItemsList = gitIgnoreContent.split('\n').filter(line => line.startsWith('/') || line.endsWith('/')).map(folder => folder.substring(1));
-			masterExcludeExtensionList = gitIgnoreContent.split('\n').filter(line => line.startsWith('.')).map(ext => ext.trim());
-
 			// Show user a quick pick with only folder list to exclude
 			let items = await listAllFilesAndFoldersInWorkspace();
-			
-			// Show the files and folders in a QuickPick with multi-selection enabled
-			const itemsToExcludeSelectedByUser = await vscode.window.showQuickPick(items.map(x=>x.formatted), {
-				canPickMany: true,
-				title: 'Select files and folders to exclude from document generation',
-				placeHolder: 'Select files and folders to exclude from document generation'
+
+			var quickPick = await vscode.window.createQuickPick();
+			quickPick.title = 'Select files and folders to exclude from document generation';
+			quickPick.placeholder = 'Exclude files and folders to exclude from document generation';
+			quickPick.ignoreFocusOut = true;
+			quickPick.step = 1
+			quickPick.totalSteps = 2;
+			quickPick.items = items.map(x => {
+				return {
+					description: x.plain,
+					label: x.formatted,
+				} as vscode.QuickPickItem
+			});
+			quickPick.canSelectMany = true;
+			// Pre-select an item by setting it in `selectedItems` (not `activeItems`).
+			let matchingItems: vscode.QuickPickItem[] = []
+			quickPick.items.forEach((item) => {
+				if (item.description?.trim() === masterExcludeItemsList.find(x => x === item.description?.trim())) {
+					matchingItems.push(item)
+				}
 			});
 
-			const itemsToExclude: string[] = [];
-			for (const item of itemsToExcludeSelectedByUser || []){
-				var plainName = items.find((value) => value.formatted === item)?.plain;
-				if (plainName) {
-					itemsToExclude.push(plainName);
-				}
-			}
-
-			for (const item of itemsToExclude) {
-				masterExcludeItemsList.push(item);
-			}
-			
-			// Ask User to exclude folder & extension
-			const filesToShowFromWorkspaceFoldersPick = [];
-			for (const folder of masterExcludeItemsList) {
-				var findFiles = vscode.workspace.findFiles(folder + '/**/*');
-				for (const file of (await findFiles).values()) {
-					const fsPath = file?.fsPath;
-					if(!itemsToExclude.includes(fsPath)){
-						filesToShowFromWorkspaceFoldersPick.push(fsPath);
+			quickPick.selectedItems = matchingItems;  // Pre-select the item(s)
+			quickPick.onDidAccept(async () => {
+				console.log('onDidAccept called')
+				const selectedItems = quickPick.selectedItems;
+				if (selectedItems.length > 0) {
+					for (const item of selectedItems || []) {
+						var plainName = items.find((value) => value.formatted === item.label)?.plain;
+						if (plainName) {
+							if (!masterExcludeItemsList.includes(plainName.trim()))
+								masterExcludeItemsList.push(plainName.trim());
+						}
 					}
+
+					quickPick.step = 2;
+					const workspaceExcludeExtensions = await vscode.window.showInputBox({
+						validateInput(value) {
+							if (value.length != 0) {
+								var splitValue = value.split(',');
+								for (const value of splitValue) {
+									var trimmedValue = value.trim();
+									if (!trimmedValue.startsWith('.')) {
+										return 'Please type comma-separated extensions like .css, .html, .md';
+									}
+								}
+							}
+						},
+						ignoreFocusOut: true,
+						placeHolder: 'Please type comma-separated to exclude specific extensions like .js, .css',
+						title: 'Exclude specific extensions from generating documentation',
+					});
+
+					for (const extension of workspaceExcludeExtensions?.split(',') || []) {
+						if (!masterExcludeExtensionList.includes(extension.trim()))
+							masterExcludeExtensionList.push(extension.trim());
+					}
+
+					var itemsToBeIncluded = quickPick.items.filter(item => !selectedItems.includes(item)).map(item => item.description);
+					config.update('includedItems', itemsToBeIncluded, vscode.ConfigurationTarget.Workspace)
+
+					// Proceed with documentation generation based on the selected level
+					scanRepository(workspaceFolder, masterExcludeItemsList, masterExcludeExtensionList, defaultDocumentFileName);
 				}
-			}
-			
-			if (filesToShowFromWorkspaceFoldersPick.length > 0)
-			{
-				const workspaceExcludeExtensions = await vscode.window.showQuickPick(filesToShowFromWorkspaceFoldersPick, {
-					canPickMany: true,
-					placeHolder: 'Select the extension to exclude from generating documentation like .js, .css',
-					title: 'Select the extension to exclude from generating documentation like .js, .css',
-				});
-
-				for (const extension of workspaceExcludeExtensions || []){
-					masterExcludeExtensionList.push(extension);
+				else {
+					vscode.window.showInformationMessage('No item selected.');
 				}
-			}
 
-		  	// Proceed with documentation generation based on the selected level
-		  	scanRepository(level, masterExcludeItemsList, masterExcludeExtensionList);
-		}
-	  });
-	
-	  context.subscriptions.push(scan);
+				quickPick.dispose();  // Always dispose of the quickPick once done.
+			});
 
-	  const createWorkspace = vscode.commands.registerCommand('docugen.createWorkspaceSettings', async () => {
-		const vscodeFolder = vscode.workspace.workspaceFolders[0].uri.fsPath + '/.vscode';
-		if (!fs.existsSync(vscodeFolder)) {
-			fs.mkdirSync(vscodeFolder);
+			quickPick.show();
 		}
 
-		// Check if settings.json exists
-		const settingsFilePath = vscodeFolder + '/settings.json';
-		if (!fs.existsSync(settingsFilePath)) {
-			fs.writeFileSync(settingsFilePath, '{}');
-		}
+		config.update('excludedItems', masterExcludeItemsList, vscode.ConfigurationTarget.Workspace)
+		config.update('excludedExtensions', masterExcludeExtensionList, vscode.ConfigurationTarget.Workspace)
 
 	});
-	context.subscriptions.push(createWorkspace);
+
+	context.subscriptions.push(scan);
 }
 
 // This method is called when your extension is deactivated
-export function deactivate() {}
+export function deactivate() { }
 
 async function getAllFilesAndFolders(folderUri: vscode.Uri, prefix = '  ') {
-    let items: { formatted: string, plain: string }[] = [];
+	let items: { formatted: string, plain: string }[] = [];
 
-    // Read the directory entries using vscode.workspace.fs
-    const folderEntries = await vscode.workspace.fs.readDirectory(folderUri);
+	// Read the directory entries using vscode.workspace.fs
+	const folderEntries = await vscode.workspace.fs.readDirectory(folderUri);
 
-    for (const [name, type] of folderEntries) {
-        const itemUri = vscode.Uri.joinPath(folderUri, name);
+	for (const [name, type] of folderEntries) {
+		const itemUri = vscode.Uri.joinPath(folderUri, name);
 
-        // Skip .vscode folder, *.code-workspace files, or any other exclusions
-        if (name === '.vscode' || name.endsWith('.code-workspace')) {
-            continue; // Skip workspace-specific files and settings
-        }
+		// Skip .vscode folder, *.code-workspace files, or any other exclusions
+		if (name === '.vscode' || name.endsWith('.code-workspace')) {
+			continue; // Skip workspace-specific files and settings
+		}
 
-        // Add folders and files with appropriate indentation
-        if (type === vscode.FileType.Directory) {
-            // Add folder with `/` at the end and recurse for its contents
+		// Add folders and files with appropriate indentation
+		if (type === vscode.FileType.Directory) {
+			// Add folder with `/` at the end and recurse for its contents
 			const itemName = `${name}`;
-            const formattedFolder = `${prefix}├── ${itemName}/`;
-            items.push({ formatted: formattedFolder, plain: itemName });
+			const formattedFolder = `${prefix}├── ${itemName}/`;
+			items.push({ formatted: formattedFolder, plain: itemName });
 
-            // Recursively get subfolders and files, with increased indentation
-            const subItems = await getAllFilesAndFolders(itemUri, `${prefix}│   `);
-            items = items.concat(subItems);
-        } else if (type === vscode.FileType.File) {
-            // Add files with the current level of indentation
+			// Recursively get subfolders and files, with increased indentation
+			const subItems = await getAllFilesAndFolders(itemUri, `${prefix}│   `);
+			items = items.concat(subItems);
+		} else if (type === vscode.FileType.File) {
+			// Add files with the current level of indentation
 			const itemName = `${name}`;
-            const formattedFile = `${prefix}├── ${itemName}`;
-            items.push({ formatted: formattedFile, plain: itemName });
-        }
-    }
+			const formattedFile = `${prefix}├── ${itemName}`;
+			items.push({ formatted: formattedFile, plain: itemName });
+		}
+	}
 
-    return items;
+	return items;
 }
 
 // Main function to display folders and files in a QuickPick with multi-selection enabled
 async function listAllFilesAndFoldersInWorkspace() {
-    const workspaceFolders = vscode.workspace.workspaceFolders;
+	const workspaceFolders = vscode.workspace.workspaceFolders;
 	let allItems: { formatted: string, plain: string }[] = [];
-    if (workspaceFolders) {
-        
-        // Collect all folders and files from each workspace folder
-        for (const workspaceFolder of workspaceFolders) {
-            const folderUri = workspaceFolder.uri;
+	if (workspaceFolders) {
 
-            // Collect all subfolders and files, with indentation
-            const subItems = await getAllFilesAndFolders(folderUri, '    ');
-            allItems = allItems.concat(subItems); // Add subfolders and files
-        }
-    } 
+		// Collect all folders and files from each workspace folder
+		for (const workspaceFolder of workspaceFolders) {
+			const folderUri = workspaceFolder.uri;
+
+			// Collect all subfolders and files, with indentation
+			const subItems = await getAllFilesAndFolders(folderUri, '    ');
+			allItems = allItems.concat(subItems); // Add subfolders and files
+		}
+	}
 
 	return allItems;
 }

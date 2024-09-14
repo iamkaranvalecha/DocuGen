@@ -16,10 +16,6 @@
       {
         "command": "docugen.scanRepository",
         "title": "Generate Document by scanning repository"
-      },
-      {
-        "command": "docugen.createWorkspaceSettings",
-        "title": "create Workspace Settings"
       }
     ],
     "configuration":[
@@ -27,6 +23,38 @@
         "title": "DocuGen",
         "scope": "resource",
         "properties": {
+          "docugen.defaultDocumentFileName": {
+            "type": "string",
+            "description": "Default file name of document generated",
+            "default": "Documentation.md",
+            "title": "DefaultDocumentFileName",
+            "workspace": true,
+            "scope": "resource"
+          },
+          "docugen.includedItems": {
+            "type": "string",
+            "description": "Automatically filled workspace level setting to save files & folders to generate documentation of",
+            "default": [],
+            "title": "Included File & Folders",
+            "workspace": true,
+            "scope": "resource"
+          },
+          "docugen.excludedItems": {
+            "type": "string",
+            "description": "Comma-separated item names to exclude from generation documentation",
+            "default": [],
+            "title": "Exclude File & Folders",
+            "workspace": true,
+            "scope": "resource"
+          },
+          "docugen.excludedExtensions": {
+            "type": "string",
+            "description": "Comma-separated extensions to exclude generating documentation",
+            "default": [],
+            "title": "Exclude File & Folders",
+            "workspace": true,
+            "scope": "resource"
+          },
           "docugen.modelselection": {
             "type": "boolean",
             "description": "Local model (true) or OpenAI (false)",
