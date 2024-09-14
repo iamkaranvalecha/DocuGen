@@ -16,6 +16,26 @@
       {
         "command": "docugen.scanRepository",
         "title": "Generate Document by scanning repository"
+      },
+      {
+        "command": "docugen.createWorkspaceSettings",
+        "title": "create Workspace Settings"
+      }
+    ],
+    "configuration":[
+      {
+        "title": "DocuGen",
+        "scope": "resource",
+        "properties": {
+          "docugen.modelselection": {
+            "type": "boolean",
+            "description": "Local model (true) or OpenAI (false)",
+            "default": true,
+            "title": "Model Selection source",
+            "workspace": true,
+            "scope": "resource"
+          }
+        }
       }
     ]
   },

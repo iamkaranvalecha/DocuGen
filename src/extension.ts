@@ -2,6 +2,8 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 import { scanRepository } from './logic';
+import * as fs from 'fs';
+
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -35,6 +37,21 @@ export function activate(context: vscode.ExtensionContext) {
 	  });
 	
 	  context.subscriptions.push(scan);
+
+	  const createWorkspace = vscode.commands.registerCommand('docugen.createWorkspaceSettings', async () => {
+		const vscodeFolder = vscode.workspace.workspaceFolders[0].uri.fsPath + '/.vscode';
+		if (!fs.existsSync(vscodeFolder)) {
+			fs.mkdirSync(vscodeFolder);
+		}
+
+		// Check if settings.json exists
+		const settingsFilePath = vscodeFolder + '/settings.json';
+		if (!fs.existsSync(settingsFilePath)) {
+			fs.writeFileSync(settingsFilePath, '{}');
+		}
+
+	});
+	context.subscriptions.push(createWorkspace);
 }
 
 // This method is called when your extension is deactivated
