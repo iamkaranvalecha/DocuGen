@@ -1,13 +1,10 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
-import AzureOpenAI from 'openai';
 import axios from 'axios';
 
-export async function scanRepository(level: string, excludeItems: string[], excludeExtensions: string[]) {
-  try{
-    
-    const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+export async function scanRepository(workspaceFolder: string, excludeItems: string[], excludeExtensions: string[], defaultDocumentFileName: string) {
+  try {
     if (!workspaceFolder) {
       vscode.window.showErrorMessage('No workspace folder found!');
       return;
@@ -16,11 +13,10 @@ export async function scanRepository(level: string, excludeItems: string[], excl
     const files: string[] = [];
     await traverseDirectory(workspaceFolder, files, excludeItems, excludeExtensions);
 
-    const documentation = await generateDocumentation(files, level);
-    await writeToFile(documentation);
+    const documentation = await generateDocumentation(files);
+    await writeToFile(documentation, defaultDocumentFileName);
   }
-  catch(exception)
-  {
+  catch (exception) {
     console.log("Error received -" + exception);
   }
 }
@@ -40,23 +36,15 @@ async function traverseDirectory(dir: string, files: string[], excludeItems: str
   }
 }
 
-async function generateDocumentation(files: string[], level: string): Promise<string> {
+async function generateDocumentation(files: string[]): Promise<string> {
   let documentation = '';
-
-  switch (level) {
-    case 'File Level':
-      documentation = await generateFileLevelDocumentation(files);
-      break;
-    default:
-      throw new Error(`Unknown documentation level: ${level}`);
-  }
-
+  documentation = await generateFileLevelDocumentation(files);
   return documentation;
 }
 
 async function generateFileLevelDocumentation(files: string[]): Promise<string> {
   let fileDocumentation = '### File Level Documentation\n';
-  
+
   for (const file of files) {
     const document = await vscode.workspace.openTextDocument(file);
     const content = document.getText();
@@ -78,20 +66,20 @@ async function callLocalLanguageModel(prompt: string, content: string) {
     headers: { 'api-key': 'ollama' },
     data: {
       model: 'gemma2:9b',
-      num_gpu : 0,
+      num_gpu: 0,
       main_gpu: 0,
       stream: false,
       prompt: content,
       system: prompt
     }
   };
-  
-  try{
+
+  try {
     var response = await axios.request(options)
     console.log(response.data.response)
     return response.data.response
   }
-  catch(error){
+  catch (error) {
     console.log(error)
     return error
   }
@@ -101,8 +89,8 @@ async function callLanguageModel(prompt: string, content: string) {
   var options = {
     method: 'POST',
     url: 'https://vsmodel.openai.azure.com/openai/deployments/gpt-4o-completions/chat/completions',
-    params: {'api-version': '2023-03-15-preview'},
-    headers: {'api-key': ''},
+    params: { 'api-version': '2023-03-15-preview' },
+    headers: { 'api-key': '' },
     data: {
       messages: [
         {
@@ -114,29 +102,29 @@ async function callLanguageModel(prompt: string, content: string) {
             }
           ]
         },
-        {role: 'user', content: [{type: 'text', text: content}]}
+        { role: 'user', content: [{ type: 'text', text: content }] }
       ]
     }
   };
-  
-  try{
+
+  try {
     var response = await axios.request(options)
     return response.data.choices[0].message.content
   }
-  catch(error){
+  catch (error) {
     console.log(error)
     return error
   }
 }
 
-async function writeToFile(content: string) {
+async function writeToFile(content: string, defaultDocumentFileName: string) {
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
   if (!workspaceFolder) {
     vscode.window.showErrorMessage('No workspace folder found!');
     return;
   }
 
-  const outputFilePath = path.join(workspaceFolder, 'documentation.md');
+  const outputFilePath = path.join(workspaceFolder, defaultDocumentFileName);
   await fs.promises.writeFile(outputFilePath, content);
   vscode.window.showInformationMessage(`Documentation generated and saved to ${outputFilePath}`);
 }
