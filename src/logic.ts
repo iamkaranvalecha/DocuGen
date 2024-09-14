@@ -15,10 +15,10 @@ export async function scanRepository(workspaceFolder: string, excludeItems: stri
 
     const files: string[] = [];
     await traverseDirectory(workspaceFolder, files, excludeItems, excludeExtensions);
-    
+
     progress.report({ message: "Scanning completed. Analysing the code..." });
-    const documentation = await generateDocumentation(files);
-    
+    const documentation = await generateDocumentation(files, progress);
+
     progress.report({ message: "Writing documentation to the file..." });
     await writeToFile(documentation, defaultDocumentFileName);
   }
@@ -42,13 +42,19 @@ async function traverseDirectory(dir: string, files: string[], excludeItems: str
   }
 }
 
-async function generateDocumentation(files: string[]): Promise<string> {
+async function generateDocumentation(files: string[], progress: vscode.Progress<{
+  message?: string;
+  increment?: number;
+}>): Promise<string> {
   let documentation = '';
-  documentation = await generateFileLevelDocumentation(files);
+  documentation = await generateFileLevelDocumentation(files, progress);
   return documentation;
 }
 
-async function generateFileLevelDocumentation(files: string[]): Promise<string> {
+async function generateFileLevelDocumentation(files: string[], progress: vscode.Progress<{
+  message?: string;
+  increment?: number;
+}>): Promise<string> {
   let fileDocumentation = '### File Level Documentation\n';
 
   for (const file of files) {
@@ -56,7 +62,7 @@ async function generateFileLevelDocumentation(files: string[]): Promise<string> 
     const content = document.getText();
 
     // Generate a summary for each file's content
-    const summary = await callLanguageModel(`Summarize the content of this file:\n${content}`, '');
+    const summary = await callLanguageModel(`Summarize the content of this file:\n${content}`, '', file, progress);
     // const summary = await callLocalLanguageModel(`Summarize the content of this file:\n`, content);
     fileDocumentation += `\n#### File: ${file}\n${summary}\n`;
   }
@@ -91,7 +97,10 @@ async function callLocalLanguageModel(prompt: string, content: string) {
   }
 }
 
-async function callLanguageModel(prompt: string, content: string) {
+async function callLanguageModel(prompt: string, content: string, fileName: string, progress: vscode.Progress<{
+  message?: string;
+  increment?: number;
+}>) {
   var options = {
     method: 'POST',
     url: 'https://vsmodel.openai.azure.com/openai/deployments/gpt-4o-completions/chat/completions',
@@ -114,6 +123,7 @@ async function callLanguageModel(prompt: string, content: string) {
   };
 
   try {
+    progress.report({ message: "Analysing file " + fileName + "..." });
     var response = await axios.request(options)
     return response.data.choices[0].message.content
   }
@@ -130,6 +140,9 @@ async function writeToFile(content: string, defaultDocumentFileName: string) {
     return;
   }
 
-  const outputFilePath = path.join(workspaceFolder, defaultDocumentFileName);
+  let outputFilePath = path.join(workspaceFolder, defaultDocumentFileName);
+  const extension = '.md';
+  outputFilePath += extension;
+
   await fs.promises.writeFile(outputFilePath, content);
 }
