@@ -3,7 +3,10 @@ import * as path from 'path';
 import * as fs from 'fs';
 import axios from 'axios';
 
-export async function scanRepository(workspaceFolder: string, excludeItems: string[], excludeExtensions: string[], defaultDocumentFileName: string) {
+export async function scanRepository(workspaceFolder: string, excludeItems: string[], excludeExtensions: string[], defaultDocumentFileName: string, progress: vscode.Progress<{
+  message?: string;
+  increment?: number;
+}>) {
   try {
     if (!workspaceFolder) {
       vscode.window.showErrorMessage('No workspace folder found!');
@@ -12,8 +15,11 @@ export async function scanRepository(workspaceFolder: string, excludeItems: stri
 
     const files: string[] = [];
     await traverseDirectory(workspaceFolder, files, excludeItems, excludeExtensions);
-
+    
+    progress.report({ message: "Scanning completed. Analysing the code..." });
     const documentation = await generateDocumentation(files);
+    
+    progress.report({ message: "Writing documentation to the file..." });
     await writeToFile(documentation, defaultDocumentFileName);
   }
   catch (exception) {
@@ -126,5 +132,4 @@ async function writeToFile(content: string, defaultDocumentFileName: string) {
 
   const outputFilePath = path.join(workspaceFolder, defaultDocumentFileName);
   await fs.promises.writeFile(outputFilePath, content);
-  vscode.window.showInformationMessage(`Documentation generated and saved to ${outputFilePath}`);
 }
