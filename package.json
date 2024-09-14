@@ -32,7 +32,7 @@
             "scope": "resource"
           },
           "docugen.includedItems": {
-            "type": "string",
+            "type": "array",
             "description": "Automatically filled workspace level setting to save files & folders to generate documentation of",
             "default": [],
             "title": "Included File & Folders",
@@ -40,7 +40,7 @@
             "scope": "resource"
           },
           "docugen.excludedItems": {
-            "type": "string",
+            "type": "array",
             "description": "Comma-separated item names to exclude from generation documentation",
             "default": [],
             "title": "Exclude File & Folders",
@@ -48,7 +48,7 @@
             "scope": "resource"
           },
           "docugen.excludedExtensions": {
-            "type": "string",
+            "type": "array",
             "description": "Comma-separated extensions to exclude generating documentation",
             "default": [],
             "title": "Exclude File & Folders",

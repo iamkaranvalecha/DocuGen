@@ -3,31 +3,35 @@
 import * as vscode from 'vscode';
 import { scanRepository } from './logic';
 
+// Get the workspace configuration
+const config = vscode.workspace.getConfiguration('docugen');
+
+let defaultDocumentFileName: string = config.get('defaultDocumentFileName') ?? 'Documentation.md';
+let includedItemsSettingName: string = 'includedItems';
+let excludedItemsSettingName: string = 'excludedItems';
+let excludedExtensionsSettingName: string = 'excludedExtensions';
+
+let masterExcludeItemsList: string[] = ['node_modules', '.vscode', '.git', '.gitignore'];
+let excludeItemConfig = config.get(excludedItemsSettingName, [])
+console.log(typeof (excludeItemConfig))
+for (const item of excludeItemConfig)
+	if (item != '' && !masterExcludeItemsList.includes(item))
+		masterExcludeItemsList.push(item)
+config.update(excludedItemsSettingName, masterExcludeItemsList, vscode.ConfigurationTarget.Workspace)
+
+let masterExcludeExtensionList: string[] = ['.python', '.env'];
+let excludeExtensionListConfig = config.get(excludedExtensionsSettingName, [])
+console.log(typeof (excludeExtensionListConfig))
+for (const item of excludeExtensionListConfig)
+	if (item != '' && !masterExcludeExtensionList.includes(item))
+		masterExcludeExtensionList.push(item)
+config.update(excludedExtensionsSettingName, masterExcludeExtensionList, vscode.ConfigurationTarget.Workspace)
+
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
-	// Get the workspace configuration
-	const config = vscode.workspace.getConfiguration('docugen');
-	
-	let defaultDocumentFileName: string = config.get('defaultDocumentFileName') ?? 'Documentation.md';
-	
-	let masterExcludeItemsList: string[] = ['node_modules', '.vscode', '.git', '.gitignore'];
-	let excludeItemConfig: string[] = config.get('excludedItems') || []
-	for(const item in excludeItemConfig)
-		if(item != '' && !masterExcludeItemsList.includes(item))
-			masterExcludeItemsList.push(item)
-	config.update('excludedItems', masterExcludeItemsList, vscode.ConfigurationTarget.Workspace)
-	
-	let masterExcludeExtensionList: string[] = ['.python', '.env'];
-	let excludeExtensionListConfig = config.get('excludedExtensions') || []
-	for(const item in excludeExtensionListConfig)
-		if(item != '' && !masterExcludeExtensionList.includes(item))
-			masterExcludeExtensionList.push(item)
-	config.update('excludedExtensions', masterExcludeExtensionList, vscode.ConfigurationTarget.Workspace)
-	
-	const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-
 	const scan = vscode.commands.registerCommand('docugen.scanRepository', async () => {
+		const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
 		if (workspaceFolder != undefined) {
 			// Read .gitignore file if present & exclude the folders & extensions
 			const gitIgnorePath = workspaceFolder + '/.gitignore';
@@ -116,28 +120,51 @@ export function activate(context: vscode.ExtensionContext) {
 					});
 
 					for (const extension of workspaceExcludeExtensions?.split(',') || []) {
-						if (!masterExcludeExtensionList.includes(extension.trim()))
+						if (extension != '' && !masterExcludeExtensionList.includes(extension.trim()))
 							masterExcludeExtensionList.push(extension.trim());
 					}
 
 					var itemsToBeIncluded = quickPick.items.filter(item => !selectedItems.includes(item)).map(item => item.description);
-					config.update('includedItems', itemsToBeIncluded, vscode.ConfigurationTarget.Workspace)
+					config.update(includedItemsSettingName, itemsToBeIncluded, vscode.ConfigurationTarget.Workspace)
 
-					// Proceed with documentation generation based on the selected level
-					scanRepository(workspaceFolder, masterExcludeItemsList, masterExcludeExtensionList, defaultDocumentFileName);
+					var updateExcludeListAgainstSelectionOfUser = masterExcludeItemsList.filter(item => {
+						if (!itemsToBeIncluded.includes(item))
+							return item
+					})
+					config.update(excludedItemsSettingName, updateExcludeListAgainstSelectionOfUser, vscode.ConfigurationTarget.Workspace)
+					config.update(excludedExtensionsSettingName, masterExcludeExtensionList, vscode.ConfigurationTarget.Workspace)
 				}
 				else {
 					vscode.window.showInformationMessage('No item selected.');
 				}
 
 				quickPick.dispose();  // Always dispose of the quickPick once done.
+
+				// Proceed with documentation generation based on the selected level
+				let excludeItemConfig = config.get(excludedItemsSettingName, [])
+				let excludeExtensionListConfig = config.get(excludedExtensionsSettingName, [])
+				vscode.window.withProgress({
+					location: vscode.ProgressLocation.Notification, // Show as a notification
+					title: "Generating Documentation using DocuGen", // Title of the progress notification
+				}, async (progress, token) => {
+					try {
+						// Simulate showing initial progress
+						progress.report({ message: "Scanning repository for files..." });
+						
+						await scanRepository(workspaceFolder, excludeItemConfig, excludeExtensionListConfig, defaultDocumentFileName, progress);
+						
+						// Notify the user with the result of the operation
+						progress.report({ message: "Please verify the documentation" });
+
+					} catch (error) {
+						// Handle errors if the method throws an exception
+						vscode.window.showErrorMessage(`An error occurred: ${error}`);
+					}
+				});
 			});
 
 			quickPick.show();
 		}
-
-		config.update('excludedItems', masterExcludeItemsList, vscode.ConfigurationTarget.Workspace)
-		config.update('excludedExtensions', masterExcludeExtensionList, vscode.ConfigurationTarget.Workspace)
 
 	});
 
