@@ -137,3 +137,5 @@ __azurite_db*__.json
 #Node Modules
 node_modules/
 node_modules 
+
+.vs/
