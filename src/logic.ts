@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 import axios from 'axios';
+import { generateSummary } from './providers';
 
 export async function scanRepository(workspaceFolder: string, excludeItems: string[], excludeExtensions: string[], defaultDocumentFileName: string, progress: vscode.Progress<{
   message?: string;
@@ -62,7 +63,8 @@ async function generateFileLevelDocumentation(files: string[], progress: vscode.
     const content = document.getText();
 
     // Generate a summary for each file's content
-    const summary = await callLanguageModel(`Summarize the content of this file:\n${content}`, '', file, progress);
+    const summary = await generateSummary(content,`Summarize the content of this file:\n`, file, progress);
+    // const summary = await dispatch(`Summarize the content of this file:\n${content}`, '', file, progress);
     // const summary = await callLocalLanguageModel(`Summarize the content of this file:\n`, content);
     fileDocumentation += `\n#### File: ${file}\n${summary}\n`;
   }
@@ -70,68 +72,7 @@ async function generateFileLevelDocumentation(files: string[], progress: vscode.
   return fileDocumentation;
 }
 
-async function callLocalLanguageModel(prompt: string, content: string) {
-  var options = {
-    method: 'POST',
-    url: 'https://gpt.amitk.in/api/generate',
-    // params: {'api-version': '2024-04-01-preview'},
-    headers: { 'api-key': 'ollama' },
-    data: {
-      model: 'gemma2:9b',
-      num_gpu: 0,
-      main_gpu: 0,
-      stream: false,
-      prompt: content,
-      system: prompt
-    }
-  };
 
-  try {
-    var response = await axios.request(options)
-    console.log(response.data.response)
-    return response.data.response
-  }
-  catch (error) {
-    console.log(error)
-    return error
-  }
-}
-
-async function callLanguageModel(prompt: string, content: string, fileName: string, progress: vscode.Progress<{
-  message?: string;
-  increment?: number;
-}>) {
-  var options = {
-    method: 'POST',
-    url: 'https://vsmodel.openai.azure.com/openai/deployments/gpt-4o-completions/chat/completions',
-    params: { 'api-version': '2023-03-15-preview' },
-    headers: { 'api-key': '' },
-    data: {
-      messages: [
-        {
-          role: 'system',
-          content: [
-            {
-              type: 'text',
-              text: prompt
-            }
-          ]
-        },
-        { role: 'user', content: [{ type: 'text', text: content }] }
-      ]
-    }
-  };
-
-  try {
-    progress.report({ message: "Analysing file " + fileName + "..." });
-    var response = await axios.request(options)
-    return response.data.choices[0].message.content
-  }
-  catch (error) {
-    console.log(error)
-    return error
-  }
-}
 
 async function writeToFile(content: string, defaultDocumentFileName: string) {
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;

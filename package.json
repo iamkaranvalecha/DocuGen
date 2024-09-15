@@ -55,11 +55,67 @@
             "workspace": true,
             "scope": "resource"
           },
-          "docugen.modelselection": {
+          "docugen.model-selection": {
             "type": "boolean",
-            "description": "Local model (true) or OpenAI (false)",
+            "description": "Use OpenAI's local API if true, otherwise use Azure OpenAI.",
             "default": true,
             "title": "Model Selection source",
+            "workspace": true,
+            "scope": "resource"
+          },
+          "docugen.model-local-api-endpoint-url": {
+            "type": "string",
+            "description": "OpenAI's local API endpoint.",
+            "default": "http://localhost:11434",
+            "title": "OpenAI's local API endpoint",
+            "workspace": true,
+            "scope": "resource"
+          },
+          "docugen.model-local-api-endpoint-key": {
+            "type": "string",
+            "description": "OpenAI's local API key.",
+            "default": "ollama",
+            "title": "OpenAI's local API key",
+            "workspace": true,
+            "scope": "resource"
+          },
+          "docugen.model-local-model-name": {
+            "type": "string",
+            "description": "Local OpenAI model name. (example: deepseek-coder-v2:latest)",
+            "default": "deepseek-coder-v2:latest",
+            "title": "Local OpenAI model name",
+            "workspace": true,
+            "scope": "resource"
+          },
+          "docugen.model-azure-openai-model-name": {
+            "type": "string",
+            "description": "Azure OpenAI model name. (example: gpt-4o,gpt-4o-completions)",
+            "default": "gpt-4o-completions",
+            "title": "Model Selection source",
+            "workspace": true,
+            "scope": "resource"
+          },
+          "docugen.model-azure-openai-model-api-endpoint": {
+            "type": "string",
+            "description": "Azure OpenAI model name. (example: gpt-4o,gpt-4o-completions)",
+            "default": "https://vsmodel.openai.azure.com",
+            "title": "Model Selection source",
+            "workspace": true,
+            "scope": "resource"
+          },
+          "docugen.model-azure-openai-model-api-version": {
+            "type": "string",
+            "description": "Azure OpenAI model name. (example: gpt-4o,gpt-4o-completions)",
+            "default": "2023-03-15-preview",
+            "title": "Model Selection source",
+            "workspace": true,
+            "scope": "resource"
+          },
+          "docugen.model-azure-openai-model-api-endpoint-key": {
+            "type": "string",
+            "description": "Azure OpenAI API key.",
+            "default": "",
+            "title": "Azure OpenAI API key.",
             "workspace": true,
             "scope": "resource"
           }
