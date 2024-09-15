@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 import axios from 'axios';
+import { generateSummary } from './providers';
 import { FileSection } from './interfaces/FileSection';
 
 export async function scanRepository(workspaceFolder: vscode.WorkspaceFolder, excludeItemsFilePaths: string[], excludeExtensionsFilePaths: string[], itemsToBeIncludedFilePaths: (string | undefined)[], documentFilePath: string, progress: vscode.Progress<{
@@ -194,7 +195,8 @@ async function generateFileLevelDocumentation(files: string[], progress: vscode.
     const content = document.getText();
 
     // Generate a summary for each file's content
-    const summary = await callLanguageModel(getSummaryPrompt(), content, file, progress);
+    const summary = await generateSummary(content,`Summarize the content of this file:\n`, file, progress);
+    // const summary = await dispatch(`Summarize the content of this file:\n${content}`, '', file, progress);
     // const summary = await callLocalLanguageModel(`Summarize the content of this file:\n`, content);
 
     fileDocumentation += `\n### File: ${file}\n${summary}\n\n----\n`;
@@ -238,41 +240,6 @@ async function callLocalLanguageModel(prompt: string, content: string) {
   }
 }
 
-async function callLanguageModel(prompt: string, content: string, fileName: string, progress: vscode.Progress<{
-  message?: string;
-  increment?: number;
-}>) {
-  var options = {
-    method: 'POST',
-    url: 'https://vsmodel.openai.azure.com/openai/deployments/gpt-4o-completions/chat/completions',
-    params: { 'api-version': '2023-03-15-preview' },
-    headers: { 'api-key': '' },
-    data: {
-      messages: [
-        {
-          role: 'system',
-          content: [
-            {
-              type: 'text',
-              text: prompt
-            }
-          ]
-        },
-        { role: 'user', content: [{ type: 'text', text: content }] }
-      ]
-    }
-  };
-
-  try {
-    progress.report({ message: "Analysing file " + fileName + "..." });
-    var response = await axios.request(options)
-    return response.data.choices[0].message.content
-  }
-  catch (error) {
-    console.log(error)
-    throw error
-  }
-}
 
 async function writeToFile(workspaceFolder: string, content: string, documentFileName: string) {
   if (!workspaceFolder) {
