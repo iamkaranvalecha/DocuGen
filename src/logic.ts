@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
-import axios from 'axios';
 import { generateSummary } from './providers';
 import { FileSection } from './interfaces/FileSection';
 
@@ -15,9 +14,6 @@ export async function scanRepository(workspaceFolder: vscode.WorkspaceFolder, ex
       vscode.window.showErrorMessage('No workspace folder found!');
       return;
     }
-
-    const files: string[] = [];
-    await traverseDirectory(workspaceFsPath, files, excludeItemsFilePaths, excludeExtensionsFilePaths);
 
     const fileExists = await checkIfFileExists(documentFilePath);
     if (fileExists === false && itemsToBeIncludedFilePaths !== undefined && itemsToBeIncludedFilePaths.length > 0) {
@@ -157,21 +153,6 @@ async function checkIfFileExists(filePath: string): Promise<boolean> {
     return true
   } catch (error) {
     return false
-  }
-}
-
-async function traverseDirectory(dir: string, files: string[], excludeItems: string[], excludeExtensions: string[]) {
-  const items = await fs.promises.readdir(dir);
-
-  for (const item of items) {
-    const fullPath = path.join(dir, item);
-    const stat = await fs.promises.stat(fullPath);
-
-    if (stat.isDirectory() && !excludeItems.includes(item)) {
-      await traverseDirectory(fullPath, files, excludeItems, excludeExtensions);
-    } else if (stat.isFile() && !excludeItems.includes(item)) {
-      files.push(fullPath);
-    }
   }
 }
 
