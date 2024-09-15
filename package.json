@@ -16,6 +16,10 @@
       {
         "command": "docugen.scanRepository",
         "title": "Generate Document by scanning repository"
+      },
+      {
+        "command": "docugen.treeview",
+        "title": "Treeviw experiment"
       }
     ],
     "configuration":[

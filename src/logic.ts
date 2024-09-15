@@ -63,7 +63,7 @@ async function generateFileLevelDocumentation(files: string[], progress: vscode.
     const content = document.getText();
 
     // Generate a summary for each file's content
-    const summary = await generateSummary(content,`Summarize the content of this file:\n`, file, progress);
+    const summary = await generateSummary(content,`Generate documentation for the code below. You should include detailed instructions to allow a developer to run it on a local machine, explain what the code does, and list vulnerabilities that exist in this code.\n`, file, progress);
     // const summary = await dispatch(`Summarize the content of this file:\n${content}`, '', file, progress);
     // const summary = await callLocalLanguageModel(`Summarize the content of this file:\n`, content);
     fileDocumentation += `\n#### File: ${file}\n${summary}\n`;
