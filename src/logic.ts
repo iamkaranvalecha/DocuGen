@@ -99,11 +99,11 @@ export async function scanRepository(workspaceFolder: vscode.WorkspaceFolder, ex
             const originalFileContent = await readFileContent(filePath);
             if (originalFileContent.length > 0) {
               // Analyze the content using the model (e.g., callLanguageModel)
-              const updatedContent = await callLanguageModel(getSummaryPrompt(), originalFileContent, filePath, progress);
+              const updatedContent = await generateSummary(getSummaryPrompt(), originalFileContent, filePath, progress);
               let prefix = `\n### File: ${filePath}\n`
               let appendContent = `${updatedContent}\n\n----\n`;
               let finalContent = prefix + appendContent
-              let endIndex = prefix.length+section.length
+              let endIndex = prefix.length + section.length
               if (appendAtEnd) {
                 // Append new content to the end if not present
                 fileContent += finalContent;
@@ -195,9 +195,7 @@ async function generateFileLevelDocumentation(files: string[], progress: vscode.
     const content = document.getText();
 
     // Generate a summary for each file's content
-    const summary = await generateSummary(content,`Summarize the content of this file:\n`, file, progress);
-    // const summary = await dispatch(`Summarize the content of this file:\n${content}`, '', file, progress);
-    // const summary = await callLocalLanguageModel(`Summarize the content of this file:\n`, content);
+    const summary = await generateSummary(getSummaryPrompt(), content, file, progress);
 
     fileDocumentation += `\n### File: ${file}\n${summary}\n\n----\n`;
   }
@@ -211,33 +209,6 @@ function excludeInvalidFiles(files: string[]) {
 
 function getSummaryPrompt() {
   return `Summarize this code file. Explain each method using best formatting practices & make sure it is done well at the end as there will be content appended in further tasks. DO NOT USE FOUL LANGUAGE. ALWAYS BE PROFESSIONAL.\n`;
-}
-
-async function callLocalLanguageModel(prompt: string, content: string) {
-  var options = {
-    method: 'POST',
-    url: 'https://gpt.amitk.in/api/generate',
-    // params: {'api-version': '2024-04-01-preview'},
-    headers: { 'api-key': 'ollama' },
-    data: {
-      model: 'gemma2:9b',
-      num_gpu: 0,
-      main_gpu: 0,
-      stream: false,
-      prompt: content,
-      system: prompt
-    }
-  };
-
-  try {
-    var response = await axios.request(options)
-    console.log(response.data.response)
-    return response.data.response
-  }
-  catch (error) {
-    console.log(error)
-    throw error
-  }
 }
 
 
