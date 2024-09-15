@@ -2,6 +2,7 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 import { scanRepository } from './logic';
+import { showFolderQuickPick } from './extension-experimental';
 
 // Get the workspace configuration
 const config = vscode.workspace.getConfiguration('docugen');
@@ -164,6 +165,19 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 
 	context.subscriptions.push(scan);
+
+
+	context.subscriptions.push(vscode.commands.registerCommand('docugen.treeview', () => {
+        // Start by fetching the workspace folder structure
+        const workspaceFolders = vscode.workspace.workspaceFolders;
+        if (workspaceFolders) {
+            const rootPath = workspaceFolders[0].uri.fsPath;
+            showFolderQuickPick(rootPath);
+        } else {
+            vscode.window.showErrorMessage("No workspace folder is open.");
+        }
+    }));
+
 }
 
 // This method is called when your extension is deactivated
