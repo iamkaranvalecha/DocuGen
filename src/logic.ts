@@ -189,7 +189,7 @@ function excludeInvalidFiles(files: string[]) {
 }
 
 function getSummaryPrompt() {
-  return `Summarize this code file. Highlight each method or api explanation using best formatting practices, Try to highlight references too & make sure to not make any assumption & strictly stick to the content & at the end there will be more content appended in further tasks. DO NOT USE FOUL LANGUAGE. ALWAYS BE PROFESSIONAL.\n`;
+  return `Summarize this code file. Breakdown the code & highlight explanation of each method or api using best formatting practices. Strictly do not share full code in output response. make sure to not make any assumption about the code & strictly stick to the content. DO NOT USE FOUL LANGUAGE. ALWAYS BE PROFESSIONAL.\n`;
 }
 
 

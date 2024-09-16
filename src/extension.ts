@@ -23,9 +23,9 @@ export function activate(context: vscode.ExtensionContext) {
 				const defaultDocumentFileNamePath = defaultDocumentFileName + defaultExtension;
 				const includedItemsSettingName: string = 'includedItems';
 				const excludedItemsSettingName: string = 'excludedItems';
-				const excludedExtensionsSettingName: string = 'excludedExtensions';
+				const supportedExtensionsSettingName: string = 'supportedExtensions';
 
-				let masterExcludeItemsList: string[] = config.get(excludedItemsSettingName, []);
+				let masterExcludeItemsList: string[] = getExcludedFolders();
 				if (masterExcludeItemsList.length > 0) {
 					for (const item of [defaultDocumentFileNamePath, 'node_modules', '.vscode', '.git', '.gitignore']) {
 						const itemPath = workspacePathPrefix + item
@@ -42,21 +42,10 @@ export function activate(context: vscode.ExtensionContext) {
 						}
 					}
 				}
-				let masterExcludeExtensionList: string[] = config.get(excludedExtensionsSettingName, []);
-				if (masterExcludeExtensionList.length > 0) {
-					for (const item of ['.python', '.env']) {
-						const itemPath = workspacePathPrefix + item
-						if (item !== '' && !masterExcludeItemsList.includes(itemPath)) {
-							masterExcludeExtensionList.push(itemPath)
-						}
-					}
-				}
-				else {
-					for (const item of masterExcludeExtensionList) {
-						if (item !== '' && !masterExcludeExtensionList.includes(item)) {
-							const itemPath = workspacePathPrefix + item;
-							masterExcludeExtensionList.push(itemPath);
-						}
+				let mastersupportedExtensionsList: string[] = getSupportedExtensions();
+				for (const item of mastersupportedExtensionsList) {
+					if (item !== '' && !mastersupportedExtensionsList.includes(item)) {
+						mastersupportedExtensionsList.push(item);
 					}
 				}
 
@@ -70,21 +59,14 @@ export function activate(context: vscode.ExtensionContext) {
 						});
 						const gitExcludeItemsList = gitIgnoreContent
 							.split('\n')
-							.filter(line => line.trim().startsWith('/') || line.trim().endsWith('/'))
+							.filter(line => (line.trim().startsWith('/') || line.trim().endsWith('/')))
 							.map(folder => folder.trim())
-							.filter(folder => !masterExcludeExtensionList.includes(folder.trim()));
+							.filter(folder => !masterExcludeItemsList.includes(folder.trim()));
 
 						// Remove duplicates by converting to a Set
 						for (const item of gitExcludeItemsList) {
 							if (!masterExcludeItemsList.includes(item.trim()))
 								masterExcludeItemsList.push(item.trim());
-						}
-
-						const gitExcludeExtensionList = gitIgnoreContent.split('\n').filter(line => line.trim().startsWith('.')).map(ext => ext.trim());
-
-						for (const item of gitExcludeExtensionList) {
-							if (!masterExcludeExtensionList.includes(item.trim()))
-								masterExcludeExtensionList.push(item.trim());
 						}
 					} catch (error) {
 						console.log('No .gitignore file found');
@@ -99,7 +81,7 @@ export function activate(context: vscode.ExtensionContext) {
 				quickPick.placeholder = 'Exclude files and folders to exclude from document generation';
 				quickPick.ignoreFocusOut = true;
 				quickPick.step = 1
-				quickPick.totalSteps = 2;
+				quickPick.totalSteps = 1;
 				// Get all directories and files recursively 
 				const items = getItemsRecursively(workspaceFsPath);
 				quickPick.items = items.map(item => {
@@ -161,30 +143,6 @@ export function activate(context: vscode.ExtensionContext) {
 							}
 						}
 
-						quickPick.step = 2;
-						const workspaceExcludeExtensions = await vscode.window.showInputBox({
-							validateInput(value) {
-								if (value.length != 0) {
-									var splitValue = value.split(',');
-									for (const value of splitValue) {
-										var trimmedValue = value.trim();
-										if (!trimmedValue.startsWith('.')) {
-											return 'Please type comma-separated extensions like .css, .html, .md';
-										}
-									}
-								}
-							},
-							ignoreFocusOut: true,
-							placeHolder: 'Please type comma-separated to exclude specific extensions like .js, .css',
-							title: 'Exclude specific extensions from generating documentation',
-						});
-
-						for (const extension of workspaceExcludeExtensions?.split(',') || []) {
-							if (extension !== '' && !masterExcludeExtensionList.includes(extension.trim())) {
-								masterExcludeExtensionList.push(extension.trim());
-							}
-						}
-
 						let itemsToBeIncluded = quickPick.items.filter(item => !selectedItems.includes(item)).map(item => item.description);
 						let updateExcludeListAgainstSelectionOfUser = masterExcludeItemsList.filter(item => {
 							if (!itemsToBeIncluded.includes(item)) {
@@ -194,7 +152,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 						config.update(includedItemsSettingName, removeDuplicates(itemsToBeIncluded), vscode.ConfigurationTarget.Workspace);
 						config.update(excludedItemsSettingName, removeDuplicates(updateExcludeListAgainstSelectionOfUser), vscode.ConfigurationTarget.Workspace);
-						config.update(excludedExtensionsSettingName, removeDuplicates(masterExcludeExtensionList), vscode.ConfigurationTarget.Workspace);
+						config.update(supportedExtensionsSettingName, removeDuplicates(mastersupportedExtensionsList), vscode.ConfigurationTarget.Workspace);
 
 						vscode.window.withProgress({
 							location: vscode.ProgressLocation.Notification, // Show as a notification
@@ -204,7 +162,7 @@ export function activate(context: vscode.ExtensionContext) {
 								// Simulate showing initial progress
 								progress.report({ message: "Scanning repository for files..." });
 
-								await scanRepository(workspaceFolder, excludeInvalidFiles(updateExcludeListAgainstSelectionOfUser), excludeInvalidFiles(masterExcludeExtensionList), excludeInvalidFiles(itemsToBeIncluded), defaultDocumentFileNamePath, progress);
+								await scanRepository(workspaceFolder, excludeInvalidFiles(updateExcludeListAgainstSelectionOfUser), excludeInvalidFiles(mastersupportedExtensionsList), excludeInvalidFiles(itemsToBeIncluded), defaultDocumentFileNamePath, progress);
 
 								// Notify the user with the result of the operation
 								progress.report({ message: "Please verify the documentation" });
@@ -272,7 +230,7 @@ function getItemsRecursively(source: string, parent: string = ''): string[] {
 
 	try {
 		const items = fs.readdirSync(source);
-		const folderExclusions = excludedFolders();
+		const folderExclusions = getExcludedFolders();
 		const filteredItems = items.filter(x => !folderExclusions.includes(x));
 		for (const item of filteredItems) {
 			const fullPath = path.join(source, item);
@@ -306,7 +264,7 @@ function getItemsRecursively(source: string, parent: string = ''): string[] {
 	return itemsList;
 }
 
-function excludedFolders(): string[] {
+function getExcludedFolders(): string[] {
 	let excludedFolders = Configuration().get<string[]>('excludedFolders')
 	if (excludedFolders == undefined || excludedFolders.length === 0)
 		excludedFolders = Constants.excludedFolders
@@ -314,11 +272,15 @@ function excludedFolders(): string[] {
 	return excludedFolders;
 }
 
-// Function to determine if a file extension should be excluded
-function isSupportedExtFile(extension: string): boolean {
+function getSupportedExtensions() {
 	let supportedExtensions = Configuration().get<string[]>('supportedExtensions')
 	if (supportedExtensions == undefined || supportedExtensions.length === 0)
 		supportedExtensions = Constants.supportedExtensions
 
-	return supportedExtensions.includes(extension);
+	return supportedExtensions;
+}
+
+// Function to determine if a file extension should be excluded
+function isSupportedExtFile(extension: string): boolean {
+	return getSupportedExtensions().includes(extension);
 }
