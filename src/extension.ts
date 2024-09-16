@@ -189,7 +189,7 @@ export function activate(context: vscode.ExtensionContext) {
 							}
 						}
 
-						let itemsToBeIncluded = excludeInvalidFiles(quickPick.items.filter(item => !selectedItems.includes(item)).map(item => item.description));
+						let itemsToBeIncluded = quickPick.items.filter(item => !selectedItems.includes(item)).map(item => item.description);
 						let updateExcludeListAgainstSelectionOfUser = masterExcludeItemsList.filter(item => {
 							if (!itemsToBeIncluded.includes(item)) {
 								return item;
@@ -208,7 +208,7 @@ export function activate(context: vscode.ExtensionContext) {
 								// Simulate showing initial progress
 								progress.report({ message: "Scanning repository for files..." });
 
-								await scanRepository(workspaceFolder, updateExcludeListAgainstSelectionOfUser, masterExcludeExtensionList, itemsToBeIncluded, defaultDocumentFileNamePath, progress);
+								await scanRepository(workspaceFolder, excludeInvalidFiles(updateExcludeListAgainstSelectionOfUser), excludeInvalidFiles(masterExcludeExtensionList), excludeInvalidFiles(itemsToBeIncluded), defaultDocumentFileNamePath, progress);
 
 								// Notify the user with the result of the operation
 								progress.report({ message: "Please verify the documentation" });

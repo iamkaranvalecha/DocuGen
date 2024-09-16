@@ -33,6 +33,7 @@ export async function scanRepository(workspaceFolder: vscode.WorkspaceFolder, ex
 
       if (itemsToBeIncludedFilePaths !== undefined) {
         // Split the file content by sections using regex for more precise matching
+        const format = '### File:';
         let sections = fileContent.split(/### File:/);
         let crossCheckSectionsAgainstIncludedItems: FileSection[] = [];
         let filePathsInFile: string[] = [];
@@ -46,14 +47,7 @@ export async function scanRepository(workspaceFolder: vscode.WorkspaceFolder, ex
           if (match) {
             const filePath = match[1].trim(); // Extract the file path
             const content = match[2].trim(); // Extract the content after the file path
-            const filePathIndex = match.index; // Index of the start of the file path
-            const contentStartIndex = filePathIndex + match[1].length + 1; // Index of the start of the content (file path length + newline)
-            const contentEndIndex = contentStartIndex + content.length; // End index of the content is the start index of the content + content length
             const fileName = getFileNameFromPath(filePath);
-
-            if (contentStartIndex === -1 || contentEndIndex === -1) {
-              continue; // Skip if section boundaries are invalid
-            }
 
             // Track the file paths in the current content
             filePathsInFile.push(filePath);
@@ -65,8 +59,6 @@ export async function scanRepository(workspaceFolder: vscode.WorkspaceFolder, ex
               filePath: filePath,
               section: section,
               toBeAnalysed: isIncluded,
-              startIndex: contentStartIndex,
-              endIndex: contentEndIndex,
               appendAtEnd: false
             });
           }
@@ -80,8 +72,6 @@ export async function scanRepository(workspaceFolder: vscode.WorkspaceFolder, ex
               filePath: item,
               section: '',
               toBeAnalysed: true,
-              startIndex: -1,
-              endIndex: -1,
               appendAtEnd: true
             });
           }
@@ -89,25 +79,33 @@ export async function scanRepository(workspaceFolder: vscode.WorkspaceFolder, ex
 
         // Process each section and analyze or append content
         for (const item of crossCheckSectionsAgainstIncludedItems) {
-          const { filePath, section, toBeAnalysed, appendAtEnd, startIndex } = item;
+          const { filePath, fileName, section, toBeAnalysed, appendAtEnd } = item;
 
           if (toBeAnalysed) {
             const originalFileContent = await readFileContent(filePath);
             if (originalFileContent.length > 0) {
               // Analyze the content using the model (e.g., callLanguageModel)
-              const updatedContent = await generateSummary(getSummaryPrompt(), originalFileContent, filePath, progress);
-              let prefix = `\n### File: ${filePath}\n`
-              let appendContent = `${updatedContent}\n\n----\n`;
+              const updatedContent = await generateSummary(getSummaryPrompt(), originalFileContent, fileName, progress);
+              let prefix = `### File: ${filePath}\n`
+              let suffix = `\n\n----\n`;
+              let appendContent = `${updatedContent}` + suffix;
               let finalContent = prefix + appendContent
-              let endIndex = prefix.length + section.length
               if (appendAtEnd) {
                 // Append new content to the end if not present
                 fileContent += finalContent;
               } else {
+                const filePathIndex = fileContent.indexOf(format + " " + filePath); // Index of the start of the file path
+                const contentStartIndex = filePathIndex; // Index of the start of the content
+                const contentEndIndex = (fileContent.indexOf(format + section) + section.length) + suffix.length + 1; // End index
+
+                if (contentStartIndex === -1 || contentEndIndex === -1) {
+                  continue; // Skip if section boundaries are invalid
+                }
+
                 // Replace the old content in the section
-                fileContent = fileContent.slice(0, startIndex) +
+                fileContent = fileContent.slice(0, contentStartIndex) +
                   finalContent +
-                  fileContent.slice(endIndex); // Adjust for '----' marker length
+                  fileContent.slice(contentEndIndex);
               }
             }
           }
@@ -178,7 +176,8 @@ async function generateFileLevelDocumentation(files: string[], progress: vscode.
     // Generate a summary for each file's content
     const summary = await generateSummary(getSummaryPrompt(), content, file, progress);
 
-    fileDocumentation += `\n### File: ${file}\n${summary}\n\n----\n`;
+    const suffix = `\n\n----\n`;
+    fileDocumentation += `### File: ${file}\n${summary}${suffix}`;
   }
 
   return fileDocumentation;
@@ -189,7 +188,7 @@ function excludeInvalidFiles(files: string[]) {
 }
 
 function getSummaryPrompt() {
-  return `Summarize this code file. Explain each method using best formatting practices & make sure it is done well at the end as there will be content appended in further tasks. DO NOT USE FOUL LANGUAGE. ALWAYS BE PROFESSIONAL.\n`;
+  return `Summarize this code file. Highlight each method or api explanation using best formatting practices, Try to highlight references too & make sure to not make any assumption & strictly stick to the content & at the end there will be more content appended in further tasks. DO NOT USE FOUL LANGUAGE. ALWAYS BE PROFESSIONAL.\n`;
 }
 
 
@@ -199,5 +198,6 @@ async function writeToFile(workspaceFolder: string, content: string, documentFil
     return;
   }
 
+  console.log(content);
   await fs.promises.writeFile(documentFileName, content);
 }
