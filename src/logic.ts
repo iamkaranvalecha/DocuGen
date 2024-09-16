@@ -22,7 +22,7 @@ export async function scanRepository(workspaceFolder: vscode.WorkspaceFolder, ex
       const documentation = await generateDocumentation(itemsToBeIncludedFilePaths, progress);
 
       progress.report({ message: "Writing documentation to the file..." });
-      await writeToFile(documentation, documentFilePath);
+      await writeToFile(workspaceFsPath,documentation, documentFilePath);
     }
     else {
       // Read the file & split in sections based on '### File:' format
@@ -111,7 +111,7 @@ export async function scanRepository(workspaceFolder: vscode.WorkspaceFolder, ex
       }
 
       // Write back the updated content to the file
-      await writeToFile(fileContent, documentFilePath);
+      await writeToFile(workspaceFsPath,fileContent, documentFilePath);
     }
   }
   catch (exception) {
@@ -193,6 +193,14 @@ function getSummaryPrompt() {
 }
 
 
-async function writeToFile(content: string, documentFileName: string) {
-  await fs.promises.writeFile(documentFileName, content);
+async function writeToFile(workspaceFolder:string,content: string, documentFileName: string) {
+  try {
+    const filePath = path.join(workspaceFolder, documentFileName);
+
+    await fs.promises.writeFile(filePath, content);
+    console.log('File created successfully:', filePath);
+  } catch (error) {
+    console.error('Error creating file:', error);
+    // Handle the error appropriately, e.g., show a user-friendly message or retry the operation
+  }
 }
