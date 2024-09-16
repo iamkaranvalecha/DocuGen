@@ -22,7 +22,7 @@ export async function scanRepository(workspaceFolder: vscode.WorkspaceFolder, ex
       const documentation = await generateDocumentation(itemsToBeIncludedFilePaths, progress);
 
       progress.report({ message: "Writing documentation to the file..." });
-      await writeToFile(workspaceFsPath, documentation, documentFilePath);
+      await writeToFile(documentation, documentFilePath);
     }
     else {
       // Read the file & split in sections based on '### File:' format
@@ -111,7 +111,7 @@ export async function scanRepository(workspaceFolder: vscode.WorkspaceFolder, ex
       }
 
       // Write back the updated content to the file
-      await writeToFile(workspaceFsPath, fileContent, documentFilePath);
+      await writeToFile(fileContent, documentFilePath);
     }
   }
   catch (exception) {
@@ -193,11 +193,6 @@ function getSummaryPrompt() {
 }
 
 
-async function writeToFile(workspaceFolder: string, content: string, documentFileName: string) {
-  if (!workspaceFolder) {
-    vscode.window.showErrorMessage('No workspace folder found!');
-    return;
-  }
-
+async function writeToFile(content: string, documentFileName: string) {
   await fs.promises.writeFile(documentFileName, content);
 }

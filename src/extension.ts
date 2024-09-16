@@ -1,27 +1,26 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
-import * as fs from 'fs'; 
+import * as fs from 'fs';
 import { scanRepository } from './logic';
-import { showFolderQuickPick } from './extension-experimental';
 import path from 'path';
+import { Configuration, Constants } from './constants';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
-	const scan = vscode.commands.registerCommand('docugen.scanRepository', async () => {
-		// Get the workspace configuration
-		const config = vscode.workspace.getConfiguration('docugen');
+	const scan = vscode.commands.registerCommand(Constants.extensionName.toLowerCase() + '.scanRepository', async () => {
+		const config = Configuration();
 		const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
 		if (workspaceFolder) {
 			const workspaceFsPath = workspaceFolder?.uri.fsPath;
 			if (workspaceFsPath !== undefined) {
 				const workspacePathPrefix = workspaceFsPath + "\\";
 				const defaultDocumentFileNameSettingName = 'defaultDocumentFileName';
-				const defaultDocumentFileNameConfig = config.get(defaultDocumentFileNameSettingName, 'DocuGen');
+				const defaultDocumentFileNameConfig = config.get(defaultDocumentFileNameSettingName, Constants.extensionName);
 				const defaultDocumentFileName: string = defaultDocumentFileNameConfig;
 				const defaultExtension: string = '.md';
-				const defaultDocumentFileNamePath = workspacePathPrefix + defaultDocumentFileName + defaultExtension;
+				const defaultDocumentFileNamePath = defaultDocumentFileName + defaultExtension;
 				const includedItemsSettingName: string = 'includedItems';
 				const excludedItemsSettingName: string = 'excludedItems';
 				const excludedExtensionsSettingName: string = 'excludedExtensions';
@@ -43,8 +42,6 @@ export function activate(context: vscode.ExtensionContext) {
 						}
 					}
 				}
-				// config.update(excludedItemsSettingName, masterExcludeItemsList, vscode.ConfigurationTarget.Workspace)
-
 				let masterExcludeExtensionList: string[] = config.get(excludedExtensionsSettingName, []);
 				if (masterExcludeExtensionList.length > 0) {
 					for (const item of ['.python', '.env']) {
@@ -62,7 +59,6 @@ export function activate(context: vscode.ExtensionContext) {
 						}
 					}
 				}
-				// config.update(excludedExtensionsSettingName, masterExcludeExtensionList, vscode.ConfigurationTarget.Workspace);
 
 				// Read .gitignore file if present & exclude the folders & extensions
 				const gitIgnorePath = workspaceFsPath + '/.gitignore';
@@ -105,20 +101,20 @@ export function activate(context: vscode.ExtensionContext) {
 				quickPick.step = 1
 				quickPick.totalSteps = 2;
 				// Get all directories and files recursively 
-				const items = getItemsRecursively(workspaceFsPath); 
+				const items = getItemsRecursively(workspaceFsPath);
 				quickPick.items = items.map(item => {
 					const fullPath = path.join(workspaceFsPath, item);
 					const isDirectory = fs.statSync(fullPath).isDirectory();
 					const ext = path.extname(item).toLowerCase();
-					return { 
-						label: item, 
+					return {
+						label: item,
 						description: fullPath,
-						iconPath: isDirectory 
-							? new vscode.ThemeIcon('folder') 
+						iconPath: isDirectory
+							? new vscode.ThemeIcon('folder')
 							: new vscode.ThemeIcon(getFileIcon(ext))
-							
-					}; 
-				}); 
+
+					};
+				});
 				quickPick.canSelectMany = true;
 				// Pre-select an item by setting it in `selectedItems` (not `activeItems`).
 				let matchingItems: vscode.QuickPickItem[] = []
@@ -130,31 +126,31 @@ export function activate(context: vscode.ExtensionContext) {
 
 				quickPick.selectedItems = matchingItems;  // Pre-select the item(s)
 				let currentlySelectedItems: Set<string> = new Set(); // Tracks currently selected items 
-				quickPick.onDidChangeSelection(selection => { 
-					const selectedItems = new Set(selection.map(item => item.label)); 
-					 
+				quickPick.onDidChangeSelection(selection => {
+					const selectedItems = new Set(selection.map(item => item.label));
+
 					// Find items that have been newly selected or deselected 
-					const newlySelectedItems = [...selectedItems].filter(item => !currentlySelectedItems.has(item)); 
-					const newlyDeselectedItems = [...currentlySelectedItems].filter(item => !selectedItems.has(item)); 
-			 
+					const newlySelectedItems = [...selectedItems].filter(item => !currentlySelectedItems.has(item));
+					const newlyDeselectedItems = [...currentlySelectedItems].filter(item => !selectedItems.has(item));
+
 					// Process newly selected items (recursive selection for directories) 
-					newlySelectedItems.forEach(item => { 
+					newlySelectedItems.forEach(item => {
 						// If parent (directory) selected, add all children 
-						const children = getChildren(item, items); 
-						children.forEach(child => selectedItems.add(child)); 
-					}); 
-			 
+						const children = getChildren(item, items);
+						children.forEach(child => selectedItems.add(child));
+					});
+
 					// Process newly deselected items (recursive deselection for directories) 
-					newlyDeselectedItems.forEach(item => { 
+					newlyDeselectedItems.forEach(item => {
 						// If parent (directory) deselected, remove all its children 
-						const children = getChildren(item, items); 
-						children.forEach(child => selectedItems.delete(child)); 
-					}); 
-			 
+						const children = getChildren(item, items);
+						children.forEach(child => selectedItems.delete(child));
+					});
+
 					// Update the final selection state 
-					currentlySelectedItems = new Set(selectedItems); 
-					quickPick.selectedItems = quickPick.items.filter(item => selectedItems.has(item.label)); 
-				}); 
+					currentlySelectedItems = new Set(selectedItems);
+					quickPick.selectedItems = quickPick.items.filter(item => selectedItems.has(item.label));
+				});
 				quickPick.onDidAccept(async () => {
 					const selectedItems = quickPick.selectedItems;
 					if (selectedItems.length > 0) {
@@ -202,7 +198,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 						vscode.window.withProgress({
 							location: vscode.ProgressLocation.Notification, // Show as a notification
-							title: "Generating Documentation using DocuGen", // Title of the progress notification
+							title: "Generating Documentation using " + Constants.extensionName, // Title of the progress notification
 						}, async (progress, token) => {
 							try {
 								// Simulate showing initial progress
@@ -232,19 +228,6 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 
 	context.subscriptions.push(scan);
-
-
-	context.subscriptions.push(vscode.commands.registerCommand('docugen.treeview', () => {
-        // Start by fetching the workspace folder structure
-        const workspaceFolders = vscode.workspace.workspaceFolders;
-        if (workspaceFolders) {
-            const rootPath = workspaceFolders[0].uri.fsPath;
-            showFolderQuickPick(rootPath);
-        } else {
-            vscode.window.showErrorMessage("No workspace folder is open.");
-        }
-    }));
-
 }
 
 // This method is called when your extension is deactivated
@@ -255,166 +238,87 @@ function excludeInvalidFiles(files: string[]) {
 }
 
 function removeDuplicates(arr: string[]): string[] {
-    return [...new Set(arr)];
+	return [...new Set(arr)];
 }
 
 // Function to get all child items (files and folders) of a given folder 
-function getChildren(parent: string, allItems: string[]): string[] { 
-    return allItems.filter(item => item.startsWith(parent + path.sep)); 
+function getChildren(parent: string, allItems: string[]): string[] {
+	return allItems.filter(item => item.startsWith(parent + path.sep));
 }
 
 // Function to get file icon based on extension
 function getFileIcon(extension: string): string {
-    switch (extension) {
-        case '.js': case '.ts': case '.jsx': case '.tsx': case '.json':
-            return 'file-code'; // Code files
-        case '.json':
-            return 'file-json'; // JSON files
-        case '.md': case '.txt':
-            return 'file-text'; // Text files
-        case '.png': case '.jpg': case '.jpeg': case '.gif':
-            return 'file-media'; // Image files
-        case '.pdf':
-            return 'file-pdf'; // PDF files
-        case '.zip': case '.tar': case '.gz':
-            return 'file-zip'; // Archive files
-        default:
-            return 'file'; // Default icon for other files
-    }
+	switch (extension) {
+		case '.js': case '.ts': case '.jsx': case '.tsx': case '.json':
+			return 'file-code'; // Code files
+		case '.json':
+			return 'file-json'; // JSON files
+		case '.md': case '.txt':
+			return 'file-text'; // Text files
+		case '.png': case '.jpg': case '.jpeg': case '.gif':
+			return 'file-media'; // Image files
+		case '.pdf':
+			return 'file-pdf'; // PDF files
+		case '.zip': case '.tar': case '.gz':
+			return 'file-zip'; // Archive files
+		default:
+			return 'file'; // Default icon for other files
+	}
 }
 
 // Function to get all directories and files recursively 
-function getItemsRecursively(source: string, parent: string = ''): string[] { 
-    let itemsList: string[] = []; 
-     
-    try { 
-        const items = fs.readdirSync(source); 
-        for (const item of items) { 
-            const fullPath = path.join(source, item); 
-            const relativePath = path.join(parent, item); 
-             
-            if (fs.statSync(fullPath).isDirectory()) { 
-                // Add the directory to the list 
-                itemsList.push(relativePath); 
- 
-                // Recursively get subdirectories and files 
-                itemsList = itemsList.concat(getItemsRecursively(fullPath, relativePath)); 
-            } else {
-                // Add the file to the list
-                // itemsList.push(relativePath);
+function getItemsRecursively(source: string, parent: string = ''): string[] {
+	let itemsList: string[] = [];
 
-                const ext = path.extname(item).toLowerCase();
-                // Exclude non-standard file types
-                if (isSupportedExtFile(ext)) {
-                    // Add the file to the list 
-                    itemsList.push(relativePath); 
-                }
-            }
-        } 
-    } catch (err) { 
-        vscode.window.showErrorMessage(`Error reading directories: ${err}`); 
-    } 
-     
-    return itemsList; 
-} 
+	try {
+		const items = fs.readdirSync(source);
+		const folderExclusions = excludedFolders();
+		const filteredItems = items.filter(x => !folderExclusions.includes(x));
+		for (const item of filteredItems) {
+			const fullPath = path.join(source, item);
+			const relativePath = path.join(parent, item);
+
+			if (fs.statSync(fullPath).isDirectory()) {
+				// Add the directory to the list 
+				itemsList.push(relativePath);
+
+				// Recursively get subdirectories and files 
+				itemsList = itemsList.concat(getItemsRecursively(fullPath, relativePath));
+			} else {
+				// Add the file to the list
+				// itemsList.push(relativePath);
+
+				const ext = path.extname(item).toLowerCase();
+				if (ext.length > 0) {
+					// Exclude non-standard file types
+					const isSupported = isSupportedExtFile(ext);
+					if (isSupported === true) {
+						// Add the file to the list 
+						itemsList.push(relativePath);
+					}
+				}
+			}
+		}
+	} catch (err) {
+		vscode.window.showErrorMessage(`Error reading directories: ${err}`);
+	}
+
+	return itemsList;
+}
+
+function excludedFolders(): string[] {
+	let excludedFolders = Configuration().get<string[]>('excludedFolders')
+	if (excludedFolders == undefined || excludedFolders.length === 0)
+		excludedFolders = Constants.excludedFolders
+
+	return excludedFolders;
+}
 
 // Function to determine if a file extension should be excluded
 function isSupportedExtFile(extension: string): boolean {
-    const supportedExtensions =[
-        ".js",
-        ".ts",
-        ".json",
-        ".html",
-        ".css",
-        ".less",
-        ".scss",
-        ".vue",
-        ".jsx",
-        ".tsx",
-        ".py",
-        ".ipynb",
-        ".yaml",
-        ".yml",
-        ".java",
-        ".xml",
-        ".properties",
-        ".c",
-        ".cpp",
-        ".h",
-        "Makefile",
-        ".cs",
-        ".config",
-        ".rb",
-        ".gemspec",
-        ".gemfile",
-        ".rake",
-        ".php",
-        ".swift",
-        ".plist",
-        ".kt",
-        ".m",
-        ".bat",
-        ".ps1",
-        "Dockerfile",
-        ".tf"
-      ];
-    return supportedExtensions.includes(extension);
-}
+	let supportedExtensions = Configuration().get<string[]>('supportedExtensions')
+	if (supportedExtensions == undefined || supportedExtensions.length === 0)
+		supportedExtensions = Constants.excludedFolders
 
-async function getAllFilesAndFolders(folderUri: vscode.Uri, prefix = '  ') {
-	let items: { formatted: string, plain: string }[] = [];
-
-	// Read the directory entries using vscode.workspace.fs
-	const folderEntries = await vscode.workspace.fs.readDirectory(folderUri);
-
-	for (const [name, type] of folderEntries) {
-		const itemUri = vscode.Uri.joinPath(folderUri, name);
-
-		// Skip .vscode folder, *.code-workspace files, or any other exclusions
-		if (name === '.vscode' || name.endsWith('.code-workspace')) {
-			continue; // Skip workspace-specific files and settings
-		}
-
-		// Add folders and files with appropriate indentation
-		if (type === vscode.FileType.Directory) {
-			// Add folder with `/` at the end and recurse for its contents
-			const itemName = `${name}`;
-			const formattedFolder = `${prefix}├── ${itemName}/`;
-			const fileUri = vscode.Uri.parse(itemUri.toString())
-			const filePath = fileUri.fsPath;
-			items.push({ formatted: formattedFolder, plain: filePath });
-
-			// Recursively get subfolders and files, with increased indentation
-			const subItems = await getAllFilesAndFolders(itemUri, `${prefix}│   `);
-			items = items.concat(subItems);
-		} else if (type === vscode.FileType.File) {
-			// Add files with the current level of indentation
-			const itemName = `${name}`;
-			const formattedFile = `${prefix}├── ${itemName}`;
-			const fileUri = vscode.Uri.parse(itemUri.toString())
-			const filePath = fileUri.fsPath;
-			items.push({ formatted: formattedFile, plain: filePath });
-		}
-	}
-
-	return items;
-}
-
-// Main function to display folders and files in a QuickPick with multi-selection enabled
-async function listAllFilesAndFoldersInWorkspace() {
-	const workspaceFolders = vscode.workspace.workspaceFolders;
-	let allItems: { formatted: string, plain: string }[] = [];
-	if (workspaceFolders) {
-
-		// Collect all folders and files from each workspace folder
-		for (const workspaceFolder of workspaceFolders) {
-			const folderUri = workspaceFolder.uri;
-
-			// Collect all subfolders and files, with indentation
-			const subItems = await getAllFilesAndFolders(folderUri, '    ');
-			allItems = allItems.concat(subItems); // Add subfolders and files
-		}
-	}
-
-	return allItems;
+	return !supportedExtensions.includes(extension);
 }
