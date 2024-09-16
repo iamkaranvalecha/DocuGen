@@ -318,7 +318,7 @@ function excludedFolders(): string[] {
 function isSupportedExtFile(extension: string): boolean {
 	let supportedExtensions = Configuration().get<string[]>('supportedExtensions')
 	if (supportedExtensions == undefined || supportedExtensions.length === 0)
-		supportedExtensions = Constants.excludedFolders
+		supportedExtensions = Constants.supportedExtensions
 
-	return !supportedExtensions.includes(extension);
+	return supportedExtensions.includes(extension);
 }

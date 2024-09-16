@@ -198,9 +198,9 @@ async function writeToFile(workspaceFolder:string,content: string, documentFileN
     const filePath = path.join(workspaceFolder, documentFileName);
 
     await fs.promises.writeFile(filePath, content);
-    console.log('File created successfully:', filePath);
+    console.log('Document generated successfully:', filePath);
   } catch (error) {
-    console.error('Error creating file:', error);
+    throw error;
     // Handle the error appropriately, e.g., show a user-friendly message or retry the operation
   }
 }
