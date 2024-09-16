@@ -16,10 +16,6 @@
       {
         "command": "docugen.scanRepository",
         "title": "Generate Document by scanning repository"
-      },
-      {
-        "command": "docugen.treeview",
-        "title": "Treeviw experiment"
       }
     ],
     "configuration":[
@@ -29,7 +25,7 @@
         "properties": {
           "docugen.defaultDocumentFileName": {
             "type": "string",
-            "description": "File name",
+            "description": "File name with extension",
             "default": "DocuGen",
             "title": "DefaultDocumentFileName",
             "workspace": true,
@@ -51,11 +47,19 @@
             "workspace": true,
             "scope": "resource"
           },
-          "docugen.excludedExtensions": {
+          "docugen.supportedExtensions": {
             "type": "array",
             "description": "Comma-separated extensions to exclude generating documentation",
             "default": [],
-            "title": "Exclude File & Folders",
+            "title": "Supported extensions for document generation",
+            "workspace": true,
+            "scope": "resource"
+          },
+          "docugen.excludedFolders": {
+            "type": "array",
+            "description": "Comma-separated extensions to exclude generating documentation",
+            "default": [],
+            "title": "Exclude folders like .vscode, .git, etc..",
             "workspace": true,
             "scope": "resource"
           },
