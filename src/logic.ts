@@ -3,6 +3,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { generateSummary } from './providers';
 import { FileSection } from './interfaces/FileSection';
+import { Constants } from './constants';
 
 export async function scanRepository(workspaceFolder: vscode.WorkspaceFolder, excludeItemsFilePaths: string[], excludeExtensionsFilePaths: string[], itemsToBeIncludedFilePaths: (string | undefined)[], documentFilePath: string, progress: vscode.Progress<{
   message?: string;
@@ -86,17 +87,14 @@ export async function scanRepository(workspaceFolder: vscode.WorkspaceFolder, ex
             if (originalFileContent.length > 0) {
               // Analyze the content using the model (e.g., callLanguageModel)
               const updatedContent = await generateSummary(getSummaryPrompt(), originalFileContent, fileName, progress);
-              let prefix = `### File: ${filePath}\n`
-              let suffix = `\n\n----\n`;
-              let appendContent = `${updatedContent}` + suffix;
-              let finalContent = prefix + appendContent
+              let finalContent = formContentInFormat(filePath, updatedContent)
               if (appendAtEnd) {
                 // Append new content to the end if not present
                 fileContent += finalContent;
               } else {
                 const filePathIndex = fileContent.indexOf(format + " " + filePath); // Index of the start of the file path
                 const contentStartIndex = filePathIndex; // Index of the start of the content
-                const contentEndIndex = (fileContent.indexOf(format + section) + section.length) + suffix.length + 1; // End index
+                const contentEndIndex = (fileContent.indexOf(format + section) + section.length) + Constants.suffix.length + 1; // End index
 
                 if (contentStartIndex === -1 || contentEndIndex === -1) {
                   continue; // Skip if section boundaries are invalid
@@ -119,6 +117,10 @@ export async function scanRepository(workspaceFolder: vscode.WorkspaceFolder, ex
   catch (exception) {
     console.log("Error received -" + exception);
   }
+}
+
+function formContentInFormat(filePath: string, content: string) {
+  return `${Constants.prefix}${filePath}${Constants.newLine}${content}${Constants.suffix}`
 }
 
 function getFileNameFromPath(filePath: string) {
@@ -167,7 +169,7 @@ async function generateFileLevelDocumentation(files: string[], progress: vscode.
   message?: string;
   increment?: number;
 }>): Promise<string> {
-  let fileDocumentation = '### AI Generated Documentation using DocuGen\n----\n';
+  let fileDocumentation = Constants.fileTitle;
 
   for (const file of excludeInvalidFiles(files)) {
     const document = await vscode.workspace.openTextDocument(file);
@@ -176,8 +178,7 @@ async function generateFileLevelDocumentation(files: string[], progress: vscode.
     // Generate a summary for each file's content
     const summary = await generateSummary(getSummaryPrompt(), content, file, progress);
 
-    const suffix = `\n\n----\n`;
-    fileDocumentation += `### File: ${file}\n${summary}${suffix}`;
+    fileDocumentation += formContentInFormat(file, summary);
   }
 
   return fileDocumentation;
@@ -198,6 +199,5 @@ async function writeToFile(workspaceFolder: string, content: string, documentFil
     return;
   }
 
-  console.log(content);
   await fs.promises.writeFile(documentFileName, content);
 }
