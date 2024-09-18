@@ -135,15 +135,15 @@ export function activate(context: vscode.ExtensionContext) {
 				});
 				quickPick.onDidAccept(async () => {
 					const selectedItems = quickPick.selectedItems;
-					if (selectedItems.length > 0) {
-						for (const item of selectedItems || []) {
-							if (item) {
-								if (!masterExcludeItemsList.includes(item.description))
-									masterExcludeItemsList.push(item.description);
-							}
+					for (const item of selectedItems || []) {
+						if (item) {
+							if (!masterExcludeItemsList.includes(item.description))
+								masterExcludeItemsList.push(item.description);
 						}
+					}
 
-						let itemsToBeIncluded = quickPick.items.filter(item => !selectedItems.includes(item)).map(item => item.description);
+					let itemsToBeIncluded = quickPick.items.filter(item => !selectedItems.includes(item)).map(item => item.description);
+					if (itemsToBeIncluded.length > 0) {
 						let updateExcludeListAgainstSelectionOfUser = masterExcludeItemsList.filter(item => {
 							if (!itemsToBeIncluded.includes(item)) {
 								return item;

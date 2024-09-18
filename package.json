@@ -25,9 +25,9 @@
         "properties": {
           "docugen.defaultDocumentFileName": {
             "type": "string",
-            "description": "File name with extension",
+            "description": "Specify file name without extension including directory path followed by forward-slash `/`",
             "default": "DocuGen",
-            "title": "DefaultDocumentFileName",
+            "title": "We can also specify folder path like `DocuGen/documentation` without extension",
             "workspace": true,
             "scope": "resource"
           },
