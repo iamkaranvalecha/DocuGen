@@ -154,6 +154,7 @@ export function activate(context: vscode.ExtensionContext) {
 						config.update(excludedItemsSettingName, removeDuplicates(updateExcludeListAgainstSelectionOfUser), vscode.ConfigurationTarget.Workspace);
 						config.update(supportedExtensionsSettingName, removeDuplicates(mastersupportedExtensionsList), vscode.ConfigurationTarget.Workspace);
 
+
 						vscode.window.withProgress({
 							location: vscode.ProgressLocation.Notification, // Show as a notification
 							title: "Generating Documentation using " + Constants.extensionName, // Title of the progress notification
@@ -169,7 +170,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 							} catch (error) {
 								// Handle errors if the method throws an exception
-								vscode.window.showErrorMessage(`An error occurred: ${error}`);
+								vscode.window.showErrorMessage(`DocuGen: An error occurred: ${error}`);
 							}
 						});
 					}
