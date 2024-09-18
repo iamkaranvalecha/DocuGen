@@ -16,7 +16,7 @@ export async function scanRepository(workspaceFolder: vscode.WorkspaceFolder, ex
       return;
     }
 
-    const fileExists = await checkIfFileExists(documentFilePath);
+    const fileExists = await checkIfFileExists(workspaceFsPath,documentFilePath);
     if (fileExists === false && itemsToBeIncludedFilePaths !== undefined && itemsToBeIncludedFilePaths.length > 0) {
       progress.report({ message: "Scanning completed. Analysing the code..." });
       const documentation = await generateDocumentation(itemsToBeIncludedFilePaths, progress);
@@ -26,7 +26,7 @@ export async function scanRepository(workspaceFolder: vscode.WorkspaceFolder, ex
     }
     else {
       // Read the file & split in sections based on '### File:' format
-      let fileContent = await readFileContent(documentFilePath);
+      let fileContent = await readDocumentationFileContent(workspaceFsPath,documentFilePath);
       if (!fileContent) {
         vscode.window.showErrorMessage('No content found in the file!');
         return;
@@ -142,17 +142,26 @@ async function readFileContent(filePath: string) {
     throw error;
   }
 }
-
-async function checkIfFileExists(filePath: string): Promise<boolean> {
-  // Create a Uri for the file using the workspace folder and file name
-  const fileUri = vscode.Uri.file(filePath);
-
+async function readDocumentationFileContent(workspaceFolder:string,filePath: string) {
   try {
-    // Use fs.stat to check if the file exists
-    await vscode.workspace.fs.readFile(fileUri);
-    return true
+    filePath = path.join(workspaceFolder,filePath);
+    const data = await fs.promises.readFile(filePath, 'utf8');
+    return data;
+  }
+  catch (error) {
+    throw error;
+  }
+}
+
+
+async function checkIfFileExists(workspaceFolder:string,filePath: string): Promise<boolean> {
+  
+  try {
+    filePath = path.join(workspaceFolder,filePath);
+    await fs.promises.readFile(filePath);
+    return true;
   } catch (error) {
-    return false
+    return false;
   }
 }
 
@@ -196,7 +205,10 @@ function getSummaryPrompt() {
 async function writeToFile(workspaceFolder:string,content: string, documentFileName: string) {
   try {
     const filePath = path.join(workspaceFolder, documentFileName);
-
+    // Check if the directory exists
+    if (!fs.existsSync(path.dirname(filePath))) {
+      await fs.promises.mkdir(path.dirname(filePath), { recursive: true });
+    }
     await fs.promises.writeFile(filePath, content);
     console.log('Document generated successfully:', filePath);
   } catch (error) {
