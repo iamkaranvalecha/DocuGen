@@ -1,6 +1,6 @@
 {
     "docugen.defaultDocumentFileName": "DocuGen/documentation",
-    "docugen.model-azure-openai-model-api-endpoint-key": "c3621f354da8423cb9df9a21428f8de6",
+    "docugen.model-azure-openai-model-api-endpoint-key": "",
     "docugen.model-selection": false,
     "docugen.includedItems": [
         "c:\\Repos\\Personal\\KA-Innovations\\DocuGen\\src\\examples\\CatalogItemService.cs",
