@@ -45,6 +45,7 @@ export const Constants = {
     ".tf",
   ],
   excludedFolders: [
+    "DocuGen",
     ".git",
     ".github",
     ".semversioner",
