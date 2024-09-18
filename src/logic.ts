@@ -16,17 +16,23 @@ export async function scanRepository(workspaceFolder: vscode.WorkspaceFolder, ex
       return;
     }
 
-    const fileExists = await checkIfFileExists(workspaceFsPath,documentFilePath);
+    const fileExists = await checkIfFileExists(workspaceFsPath, documentFilePath);
     if (fileExists === false && itemsToBeIncludedFilePaths !== undefined && itemsToBeIncludedFilePaths.length > 0) {
       progress.report({ message: "Scanning completed. Analysing the code..." });
       const documentation = await generateDocumentation(itemsToBeIncludedFilePaths, progress);
 
-      progress.report({ message: "Writing documentation to the file..." });
-      await writeToFile(workspaceFsPath,documentation, documentFilePath);
+      if (documentation.length > 0) {
+        progress.report({ message: "Writing documentation to the file..." });
+        await writeToFile(workspaceFsPath, documentation, documentFilePath);
+      }
+      else {
+        progress.report({ message: "Unable to generate documentation" })
+        throw new Error("Unable to generate documentation");
+      }
     }
     else {
       // Read the file & split in sections based on '### File:' format
-      let fileContent = await readDocumentationFileContent(workspaceFsPath,documentFilePath);
+      let fileContent = await readDocumentationFileContent(workspaceFsPath, documentFilePath);
       if (!fileContent) {
         vscode.window.showErrorMessage('No content found in the file!');
         return;
@@ -86,24 +92,30 @@ export async function scanRepository(workspaceFolder: vscode.WorkspaceFolder, ex
             const originalFileContent = await readFileContent(filePath);
             if (originalFileContent.length > 0) {
               // Analyze the content using the model (e.g., callLanguageModel)
-              const updatedContent = await generateSummary(getSummaryPrompt(), originalFileContent, fileName, progress);
-              let finalContent = formContentInFormat(filePath, updatedContent)
-              if (appendAtEnd) {
-                // Append new content to the end if not present
-                fileContent += finalContent;
-              } else {
-                const filePathIndex = fileContent.indexOf(format + " " + filePath); // Index of the start of the file path
-                const contentStartIndex = filePathIndex; // Index of the start of the content
-                const contentEndIndex = (fileContent.indexOf(format + section) + section.length) + Constants.suffix.length + 1; // End index
+              const updatedContent: string = await generateSummary(getSummaryPrompt(), originalFileContent, fileName, progress);
+              if (updatedContent.length > 0) {
+                let finalContent = formContentInFormat(filePath, updatedContent)
+                if (appendAtEnd) {
+                  // Append new content to the end if not present
+                  fileContent += finalContent;
+                } else {
+                  const filePathIndex = fileContent.indexOf(format + " " + filePath); // Index of the start of the file path
+                  const contentStartIndex = filePathIndex; // Index of the start of the content
+                  const contentEndIndex = (fileContent.indexOf(format + section) + section.length) + Constants.suffix.length + 1; // End index
 
-                if (contentStartIndex === -1 || contentEndIndex === -1) {
-                  continue; // Skip if section boundaries are invalid
+                  if (contentStartIndex === -1 || contentEndIndex === -1) {
+                    continue; // Skip if section boundaries are invalid
+                  }
+
+                  // Replace the old content in the section
+                  fileContent = fileContent.slice(0, contentStartIndex) +
+                    finalContent +
+                    fileContent.slice(contentEndIndex);
                 }
-
-                // Replace the old content in the section
-                fileContent = fileContent.slice(0, contentStartIndex) +
-                  finalContent +
-                  fileContent.slice(contentEndIndex);
+              }
+              else{
+                progress.report({ message: "Unable to generate documentation"})
+                throw new Error("Unable to generate documentation");
               }
             }
           }
@@ -111,11 +123,12 @@ export async function scanRepository(workspaceFolder: vscode.WorkspaceFolder, ex
       }
 
       // Write back the updated content to the file
-      await writeToFile(workspaceFsPath,fileContent, documentFilePath);
+      await writeToFile(workspaceFsPath, fileContent, documentFilePath);
     }
   }
   catch (exception) {
     console.log("Error received -" + exception);
+    throw exception;
   }
 }
 
@@ -142,9 +155,9 @@ async function readFileContent(filePath: string) {
     throw error;
   }
 }
-async function readDocumentationFileContent(workspaceFolder:string,filePath: string) {
+async function readDocumentationFileContent(workspaceFolder: string, filePath: string) {
   try {
-    filePath = path.join(workspaceFolder,filePath);
+    filePath = path.join(workspaceFolder, filePath);
     const data = await fs.promises.readFile(filePath, 'utf8');
     return data;
   }
@@ -154,10 +167,10 @@ async function readDocumentationFileContent(workspaceFolder:string,filePath: str
 }
 
 
-async function checkIfFileExists(workspaceFolder:string,filePath: string): Promise<boolean> {
-  
+async function checkIfFileExists(workspaceFolder: string, filePath: string): Promise<boolean> {
+
   try {
-    filePath = path.join(workspaceFolder,filePath);
+    filePath = path.join(workspaceFolder, filePath);
     await fs.promises.readFile(filePath);
     return true;
   } catch (error) {
@@ -202,7 +215,7 @@ function getSummaryPrompt() {
 }
 
 
-async function writeToFile(workspaceFolder:string,content: string, documentFileName: string) {
+async function writeToFile(workspaceFolder: string, content: string, documentFileName: string) {
   try {
     const filePath = path.join(workspaceFolder, documentFileName);
     // Check if the directory exists
