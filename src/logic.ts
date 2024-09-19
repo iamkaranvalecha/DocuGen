@@ -40,7 +40,6 @@ export async function scanRepository(workspaceFolder: vscode.WorkspaceFolder, ex
 
       if (itemsToBeIncludedFilePaths !== undefined) {
         // Split the file content by sections using regex for more precise matching
-        const format = '### File:';
         let sections = fileContent.split(/### File:/);
         let crossCheckSectionsAgainstIncludedItems: FileSection[] = [];
         let filePathsInFile: string[] = [];
@@ -99,9 +98,9 @@ export async function scanRepository(workspaceFolder: vscode.WorkspaceFolder, ex
                   // Append new content to the end if not present
                   fileContent += finalContent;
                 } else {
-                  const filePathIndex = fileContent.indexOf(format + " " + filePath); // Index of the start of the file path
+                  const filePathIndex = fileContent.indexOf(formFilePathWithPrefix(filePath)); // Index of the start of the file path
                   const contentStartIndex = filePathIndex; // Index of the start of the content
-                  const contentEndIndex = (fileContent.indexOf(format + section) + section.length) + Constants.suffix.length + 1; // End index
+                  const contentEndIndex = (fileContent.indexOf(Constants.prefix + section) + section.length) + Constants.suffix.length + 1; // End index
 
                   if (contentStartIndex === -1 || contentEndIndex === -1) {
                     continue; // Skip if section boundaries are invalid
@@ -132,8 +131,12 @@ export async function scanRepository(workspaceFolder: vscode.WorkspaceFolder, ex
   }
 }
 
+function formFilePathWithPrefix(filePath: string){
+  return `${Constants.prefix}${Constants.space}${filePath}`
+}
+
 function formContentInFormat(filePath: string, content: string) {
-  return `${Constants.prefix}${filePath}${Constants.newLine}${content}${Constants.suffix}`
+  return `${formFilePathWithPrefix(filePath)}${Constants.newLine}${content}${Constants.suffix}`
 }
 
 function getFileNameFromPath(filePath: string) {

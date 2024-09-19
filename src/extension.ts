@@ -75,8 +75,6 @@ export function activate(context: vscode.ExtensionContext) {
 				}
 
 				// Show user a quick pick with only folder list to exclude
-				// let items = await listAllFilesAndFoldersInWorkspace();
-
 				var quickPick = await vscode.window.createQuickPick();
 				quickPick.title = 'Select files and folders to exclude from document generation';
 				quickPick.placeholder = 'Exclude files and folders to exclude from document generation';
@@ -106,67 +104,67 @@ export function activate(context: vscode.ExtensionContext) {
 						matchingItems.push(item);  // Pre-select items that are NOT in the exclusion list (i.e., items to be included)
 					}
 				});
-				
+
 				quickPick.selectedItems = matchingItems;  // Pre-select the items to be included
 				let currentlySelectedItems: Set<string> = new Set(); // Tracks currently selected items 
 				quickPick.onDidChangeSelection(selection => {
 					const selectedItems = new Set(selection.map(item => item.label));
-				
+
 					// Find items that have been newly selected or deselected
 					const newlySelectedItems = [...selectedItems].filter(item => !currentlySelectedItems.has(item));
 					const newlyDeselectedItems = [...currentlySelectedItems].filter(item => !selectedItems.has(item));
-				
+
 					// Process newly selected items (recursive selection for directories)
 					newlySelectedItems.forEach(item => {
 						// If parent (directory) selected, add all children
 						const children = getChildren(item, items);
 						children.forEach(child => selectedItems.add(child));
 					});
-				
+
 					// Process newly deselected items (recursive deselection for directories)
 					newlyDeselectedItems.forEach(item => {
 						// If parent (directory) deselected, remove all its children
 						const children = getChildren(item, items);
 						children.forEach(child => selectedItems.delete(child));
 					});
-				
+
 					// Update the final selection state
 					currentlySelectedItems = new Set(selectedItems);
 					quickPick.selectedItems = quickPick.items.filter(item => selectedItems.has(item.label));
-				});				
+				});
 				quickPick.onDidAccept(async () => {
 					const selectedItems = quickPick.selectedItems;
-				    let itemsToBeIncluded = selectedItems.map(item => item.description);
-								
-				    let excludedItems = quickPick.items
-				        .filter(item => !selectedItems.includes(item))
-				        .map(item => item.description);
-								
-				    if (itemsToBeIncluded.length > 0) {
-				        config.update(includedItemsSettingName, removeDuplicates(itemsToBeIncluded), vscode.ConfigurationTarget.Workspace);
-				        config.update(excludedItemsSettingName, removeDuplicates(excludedItems), vscode.ConfigurationTarget.Workspace);
-				        config.update(supportedExtensionsSettingName, removeDuplicates(mastersupportedExtensionsList), vscode.ConfigurationTarget.Workspace);
-					
-				        vscode.window.withProgress({
-				            location: vscode.ProgressLocation.Notification, 
-				            title: "Generating Documentation using " + Constants.extensionName,
-				        }, async (progress, token) => {
-				            try {
-				                progress.report({ message: "Scanning repository for files..." });
-							
-				                await scanRepository(workspaceFolder, excludeInvalidFiles(excludedItems), excludeInvalidFiles(mastersupportedExtensionsList), excludeInvalidFiles(itemsToBeIncluded), defaultDocumentFileNamePath, progress);
-							
-				                progress.report({ message: "Please verify the documentation" });
-							
-				            } catch (error) {
-				                vscode.window.showErrorMessage(`DocuGen: An error occurred: ${error}`);
-				            }
-				        });
-				    } else {
-				        vscode.window.showInformationMessage('No item selected.');
-				    }
-				
-				    quickPick.dispose();  // Always dispose of the quickPick once done.
+					const itemsToBeIncluded = selectedItems.map(item => item.description) ?? undefined;
+
+					if (itemsToBeIncluded !== undefined && itemsToBeIncluded.length > 0) {
+						let excludedItems = quickPick.items
+							.filter(item => !selectedItems.includes(item))
+							.map(item => item.description);
+
+						config.update(includedItemsSettingName, removeDuplicates(itemsToBeIncluded), vscode.ConfigurationTarget.Workspace);
+						config.update(excludedItemsSettingName, removeDuplicates(excludedItems), vscode.ConfigurationTarget.Workspace);
+						config.update(supportedExtensionsSettingName, removeDuplicates(mastersupportedExtensionsList), vscode.ConfigurationTarget.Workspace);
+
+						vscode.window.withProgress({
+							location: vscode.ProgressLocation.Notification,
+							title: "DocuGen: Generating Documentation..",
+						}, async (progress, token) => {
+							try {
+								progress.report({ message: "Scanning repository for files..." });
+
+								await scanRepository(workspaceFolder, excludeInvalidFiles(excludedItems), excludeInvalidFiles(mastersupportedExtensionsList), excludeInvalidFiles(itemsToBeIncluded), defaultDocumentFileNamePath, progress);
+
+								progress.report({ message: "Please verify the documentation" });
+
+							} catch (error) {
+								vscode.window.showErrorMessage(`DocuGen: An error occurred: ${error}`);
+							}
+						});
+					} else {
+						vscode.window.showInformationMessage('No item selected.');
+					}
+
+					quickPick.dispose();  // Always dispose of the quickPick once done.
 				});
 
 				quickPick.show();
@@ -223,9 +221,9 @@ function getItemsRecursively(source: string, parent: string = ''): string[] {
 		const filteredItems = items.filter(x => !folderExclusions.includes(x));
 		for (const item of filteredItems) {
 			// Exclude items starting with a dot ('.')
-            if (item.startsWith('.')) {
-                continue; // Skip files and folders starting with '.'
-            }
+			if (item.startsWith('.')) {
+				continue; // Skip files and folders starting with '.'
+			}
 
 			const fullPath = path.join(source, item);
 			const relativePath = path.join(parent, item);
@@ -263,7 +261,7 @@ function getExcludedFolders(): string[] {
 	const excludedFoldersFromConstant = Constants.excludedFolders;
 	if (excludedFolders === undefined || excludedFolders.length === 0)
 		excludedFolders = excludedFoldersFromConstant;
-	else{
+	else {
 		excludedFolders.concat(excludedFoldersFromConstant);
 	}
 
