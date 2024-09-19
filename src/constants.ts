@@ -2,7 +2,8 @@ import * as vscode from "vscode";
 
 export const Constants = {
   extensionName: "DocuGen",
-  prefix: `### File: `,
+  prefix: `### File:`,
+  space: ` `,
   suffix: `\n\n----\n`,
   newLine: `\n`,
   fileTitle: "### AI Generated Documentation using DocuGen\n----\n",
