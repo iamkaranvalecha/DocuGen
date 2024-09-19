@@ -58,6 +58,17 @@ export const Constants = {
     "bin",
     "obj",
     ".config",
+    "bower_components",
+    "out",
+    "target",
+    "coverage",
+    ".svn",
+    ".hg",
+    ".idea",
+    "Thumbs.db",
+    ".DS_Store",
+    "logs",
+    "test-reports",
   ],
 };
 
