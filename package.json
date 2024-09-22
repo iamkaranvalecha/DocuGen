@@ -55,67 +55,59 @@
             "workspace": true,
             "scope": "resource"
           },
-          "docugen.excludedFolders": {
-            "type": "array",
-            "description": "Comma-separated extensions to exclude generating documentation",
-            "default": [],
-            "title": "Exclude folders like .vscode, .git, etc..",
-            "workspace": true,
-            "scope": "resource"
-          },
           "docugen.model-selection": {
             "type": "boolean",
-            "description": "Use OpenAI's local API if true, otherwise use Azure OpenAI.",
-            "default": true,
+            "description": "Select when we want to use Ollama integrated models",
+            "default": false,
             "title": "Model Selection source",
             "workspace": true,
             "scope": "resource"
           },
           "docugen.model-local-api-endpoint-url": {
             "type": "string",
-            "description": "OpenAI's local API endpoint.",
+            "description": "Ollama API endpoint.",
             "default": "http://localhost:11434",
-            "title": "OpenAI's local API endpoint",
+            "title": "Ollama API endpoint",
             "workspace": true,
             "scope": "resource"
           },
           "docugen.model-local-api-endpoint-key": {
             "type": "string",
-            "description": "OpenAI's local API key.",
+            "description": "Ollama API key.",
             "default": "ollama",
-            "title": "OpenAI's local API key",
+            "title": "Ollama API key",
             "workspace": true,
             "scope": "resource"
           },
           "docugen.model-local-model-name": {
             "type": "string",
-            "description": "Local OpenAI model name. (example: deepseek-coder-v2:latest)",
+            "description": "Ollama model name. (example: deepseek-coder-v2:latest)",
             "default": "deepseek-coder-v2:latest",
-            "title": "Local OpenAI model name",
+            "title": "Ollama model name",
             "workspace": true,
             "scope": "resource"
           },
           "docugen.model-azure-openai-model-name": {
             "type": "string",
-            "description": "Azure OpenAI model name. (example: gpt-4o,gpt-4o-completions)",
+            "description": "Azure OpenAI model name. (example: gpt-4o)",
             "default": "gpt-4o-completions",
-            "title": "Model Selection source",
+            "title": "OpenAI model name",
             "workspace": true,
             "scope": "resource"
           },
           "docugen.model-azure-openai-model-api-endpoint": {
             "type": "string",
-            "description": "Azure OpenAI model name. (example: gpt-4o,gpt-4o-completions)",
+            "description": "Azure OpenAI model endpoint. (example: https://<instance>.openai.azure.com)",
             "default": "https://vsmodel.openai.azure.com",
-            "title": "Model Selection source",
+            "title": "OpenAI model endpoint",
             "workspace": true,
             "scope": "resource"
           },
           "docugen.model-azure-openai-model-api-version": {
             "type": "string",
-            "description": "Azure OpenAI model name. (example: gpt-4o,gpt-4o-completions)",
+            "description": "Azure OpenAI model name. (example: 2023-03-15-preview)",
             "default": "2023-03-15-preview",
-            "title": "Model Selection source",
+            "title": "OpenAI model version",
             "workspace": true,
             "scope": "resource"
           },
