@@ -82,7 +82,7 @@ export function activate(context: vscode.ExtensionContext) {
 				quickPick.step = 1
 				quickPick.totalSteps = 1;
 				// Get all directories and files recursively 
-				const items = getItemsRecursively(workspaceFsPath);
+				const items = excludeInvalidFiles(getItemsRecursively(workspaceFsPath));
 				quickPick.items = items.map(item => {
 					const fullPath = path.join(workspaceFsPath, item);
 					const isDirectory = fs.statSync(fullPath).isDirectory();
