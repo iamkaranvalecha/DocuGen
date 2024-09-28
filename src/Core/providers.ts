@@ -1,5 +1,5 @@
-import { IModelProvider } from './interfaces/IModelProvider';
-import { ISecretProvider } from './interfaces/ISecretProvider';
+import { IModelProvider } from './providers/IModelProvider';
+import { ISecretProvider } from './providers/ISecretProvider';
 import axios from "axios";
 
 export class Providers implements IModelProvider {
