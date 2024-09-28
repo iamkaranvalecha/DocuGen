@@ -1,16 +1,27 @@
 import * as path from 'path';
 import * as fs from 'fs';
-import { IModelProvider } from './providers/IModelProvider';
+import { ISecretProvider } from './providers/ISecretProvider';
 import { FileSection } from './models/FileSection';
 import { Constants } from './constants';
-import { IDocuGenProvider } from './providers/IDocuGenProvider';
+import { Providers } from './providers';
+import { ConfigProvider } from './configprovider';
 
-export class DocuGen implements IDocuGenProvider {
+export class DocuGen {
+  private sectionConfig;
+  private configProvider;
+  private ISecretProvider: ISecretProvider;
 
-  private modelProvider: IModelProvider;
+  constructor(ISecretProvider: ISecretProvider, configSectionName: string) {
+    if (!configSectionName) {
+      throw new Error('Config section is required');
+    }
+    if (!ISecretProvider) {
+      throw new Error('Secret provider is required');
+    }
 
-  constructor(modelProvider: IModelProvider) {
-    this.modelProvider = modelProvider;
+    this.configProvider = new ConfigProvider();
+    this.sectionConfig = this.configProvider.getSection(configSectionName);
+    this.ISecretProvider = ISecretProvider
   }
 
   async scanRepository(workspaceFsPath: string, excludeItemsFilePaths: string[], excludeExtensionsFilePaths: string[], itemsToBeIncludedFilePaths: (string | undefined)[], documentFilePath: string) {
@@ -88,7 +99,7 @@ export class DocuGen implements IDocuGenProvider {
               const originalFileContent = await this.readFileContent(filePath);
               if (originalFileContent.length > 0) {
                 // Analyze the content using the model (e.g., callLanguageModel)
-                const updatedContent: string = await this.modelProvider.sendRequestToModel(this.getSummaryPrompt(), originalFileContent, fileName);
+                const updatedContent: string = await new Providers(this.ISecretProvider).sendRequestToModel(this.getSummaryPrompt(), originalFileContent, this.sectionConfig);
                 if (updatedContent.length > 0) {
                   let finalContent = this.formContentInFormat(filePath, updatedContent)
                   if (appendAtEnd) {
@@ -194,7 +205,7 @@ export class DocuGen implements IDocuGenProvider {
 
         console.log('file content:', document);
         // Generate a summary for each file's content
-        const summary = await this.modelProvider.sendRequestToModel(this.getSummaryPrompt(), document, file);
+        const summary = await new Providers(this.ISecretProvider).sendRequestToModel(this.getSummaryPrompt(), document, this.sectionConfig);
 
         console.log('Summary generated')
         fileDocumentation += this.formContentInFormat(file, summary);
