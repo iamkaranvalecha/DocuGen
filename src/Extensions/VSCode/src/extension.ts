@@ -2,10 +2,9 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 import * as fs from 'fs';
-import { DocuGen } from './logic/logic';
-import { Providers } from './logic/providers';
+import { DocuGen, Providers, Constants } from 'docugen';
 import path from 'path';
-import { Configuration, Constants } from './logic/constants';
+import { VSCodeSecretProvider } from './providers/VSCodeSecretProvider';
 
 const defaultExtension: string = '.md';
 const includedItemsSettingName: string = 'includedItems';
@@ -16,7 +15,7 @@ const supportedExtensionsSettingName: string = 'supportedExtensions';
 // Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
 	const scan = vscode.commands.registerCommand(Constants.extensionName.toLowerCase() + '.scanRepository', async () => {
-		const config = Configuration();
+		const config = getConfiguration();
 		const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
 		if (workspaceFolder) {
 			const workspaceFsPath = workspaceFolder?.uri.fsPath;
@@ -152,8 +151,7 @@ export function activate(context: vscode.ExtensionContext) {
 						}, async (progress, token) => {
 							try {
 								progress.report({ message: "Scanning repository for files..." });
-
-								await new DocuGen(new Providers()).scanRepository(workspaceFolder, excludeInvalidFiles(excludedItems), excludeInvalidFiles(mastersupportedExtensionsList), excludeInvalidFiles(itemsToBeIncluded), defaultDocumentFileNamePath, progress);
+								await new DocuGen(new Providers(getSecretProvider())).scanRepository(workspaceFsPath, excludeInvalidFiles(excludedItems), excludeInvalidFiles(mastersupportedExtensionsList), excludeInvalidFiles(itemsToBeIncluded), defaultDocumentFileNamePath);//progress
 
 								progress.report({ message: "Please verify the documentation" });
 
@@ -258,7 +256,7 @@ function getItemsRecursively(source: string, parent: string = ''): string[] {
 }
 
 function getExcludedFolders(): string[] {
-	let excludedFolders = Configuration().get<string[]>(excludedItemsSettingName);
+	let excludedFolders = getConfiguration().get<string[]>(excludedItemsSettingName);
 	const excludedFoldersFromConstant = Constants.excludedFolders;
 	if (excludedFolders === undefined || excludedFolders.length === 0)
 		excludedFolders = excludedFoldersFromConstant;
@@ -270,7 +268,7 @@ function getExcludedFolders(): string[] {
 }
 
 function getSupportedExtensions() {
-	let supportedExtensions = Configuration().get<string[]>(supportedExtensionsSettingName);
+	let supportedExtensions = getConfiguration().get<string[]>(supportedExtensionsSettingName);
 	if (supportedExtensions === undefined || supportedExtensions.length === 0)
 		supportedExtensions = Constants.supportedExtensions;
 
@@ -280,4 +278,11 @@ function getSupportedExtensions() {
 // Function to determine if a file extension should be excluded
 function isSupportedExtFile(extension: string): boolean {
 	return getSupportedExtensions().includes(extension);
+}
+
+function getConfiguration() {
+	return getSecretProvider().getConfiguration();
+}
+function getSecretProvider() {
+	return new VSCodeSecretProvider();
 }

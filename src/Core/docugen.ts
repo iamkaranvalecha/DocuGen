@@ -127,15 +127,15 @@ export class DocuGen implements IDocuGenProvider {
     }
   }
 
-  formFilePathWithPrefix(filePath: string) {
+  private formFilePathWithPrefix(filePath: string) {
     return `${Constants.prefix}${Constants.space}${filePath}`
   }
 
-  formContentInFormat(filePath: string, content: string) {
+  private formContentInFormat(filePath: string, content: string) {
     return `${this.formFilePathWithPrefix(filePath)}${Constants.newLine}${content}${Constants.suffix}`
   }
 
-  getFileNameFromPath(filePath: string) {
+  private getFileNameFromPath(filePath: string) {
     try {
       const fileName = path.basename(filePath);
       return fileName;
@@ -145,7 +145,7 @@ export class DocuGen implements IDocuGenProvider {
     }
   }
 
-  async readFileContent(filePath: string) {
+  private async readFileContent(filePath: string) {
     try {
       const data = await fs.promises.readFile(filePath, 'utf8');
       return data;
@@ -154,7 +154,7 @@ export class DocuGen implements IDocuGenProvider {
       throw error;
     }
   }
-  async readDocumentationFileContent(workspaceFolder: string, filePath: string) {
+  private async readDocumentationFileContent(workspaceFolder: string, filePath: string) {
     try {
       filePath = path.join(workspaceFolder, filePath);
       console.log('Reading file:', filePath);
@@ -167,7 +167,7 @@ export class DocuGen implements IDocuGenProvider {
   }
 
 
-  async checkIfFileExists(workspaceFolder: string, filePath: string): Promise<boolean> {
+  private async checkIfFileExists(workspaceFolder: string, filePath: string): Promise<boolean> {
 
     try {
       filePath = path.join(workspaceFolder, filePath);
@@ -178,13 +178,13 @@ export class DocuGen implements IDocuGenProvider {
     }
   }
 
-  async generateDocumentation(files: (string | undefined)[]): Promise<string> {
+  private async generateDocumentation(files: (string | undefined)[]): Promise<string> {
     let documentation = '';
     documentation = await this.generateFileLevelDocumentation(files);
     return documentation;
   }
 
-  async generateFileLevelDocumentation(files: (string | undefined)[]): Promise<string> {
+  private async generateFileLevelDocumentation(files: (string | undefined)[]): Promise<string> {
     let fileDocumentation = Constants.fileTitle;
     console.log('Generating documentation for files:', files);
     for (const file of this.excludeInvalidFiles(files)) {
@@ -204,16 +204,16 @@ export class DocuGen implements IDocuGenProvider {
     return fileDocumentation;
   }
 
-  excludeInvalidFiles(files: (string | undefined)[]) {
+  private excludeInvalidFiles(files: (string | undefined)[]) {
     return files.filter(x => x !== undefined && path.extname(x) !== '')
   }
 
-  getSummaryPrompt() {
+  private getSummaryPrompt() {
     return `Summarize this code file. Breakdown the code & highlight explanation of each method or api using best formatting practices. Strictly do not share full code in output response. make sure to not make any assumption about the code & strictly stick to the content. DO NOT USE FOUL LANGUAGE. ALWAYS BE PROFESSIONAL.\n`;
   }
 
 
-  async writeToFile(workspaceFolder: string, content: string, documentFileName: string) {
+  private async writeToFile(workspaceFolder: string, content: string, documentFileName: string) {
     try {
       const filePath = path.join(workspaceFolder, documentFileName);
       // Check if the directory exists

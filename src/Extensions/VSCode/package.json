@@ -1,0 +1,156 @@
+{
+  "name": "docugen",
+  "displayName": "DocuGen",
+  "description": "",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.92.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "docugen.scanRepository",
+        "title": "Generate Document by scanning repository"
+      }
+    ],
+    "configuration": [
+      {
+        "title": "DocuGen",
+        "scope": "resource",
+        "properties": {
+          "docugen.defaultDocumentFileName": {
+            "type": "string",
+            "description": "Specify file name without extension including directory path followed by forward-slash `/`",
+            "default": "DocuGen",
+            "title": "We can also specify folder path like `DocuGen/documentation` without extension",
+            "workspace": true,
+            "scope": "resource"
+          },
+          "docugen.includedItems": {
+            "type": "array",
+            "description": "Automatically filled workspace level setting to save files & folders to generate documentation of",
+            "default": [],
+            "title": "Included File & Folders",
+            "workspace": true,
+            "scope": "resource"
+          },
+          "docugen.excludedItems": {
+            "type": "array",
+            "description": "Comma-separated item names to exclude from generation documentation",
+            "default": [],
+            "title": "Exclude File & Folders",
+            "workspace": true,
+            "scope": "resource"
+          },
+          "docugen.supportedExtensions": {
+            "type": "array",
+            "description": "Comma-separated extensions to exclude generating documentation",
+            "default": [],
+            "title": "Supported extensions for document generation",
+            "workspace": true,
+            "scope": "resource"
+          },
+          "docugen.model-selection": {
+            "type": "boolean",
+            "description": "Select when we want to use Ollama integrated models",
+            "default": false,
+            "title": "Model Selection source",
+            "workspace": true,
+            "scope": "resource"
+          },
+          "docugen.model-local-api-endpoint-url": {
+            "type": "string",
+            "description": "Ollama API endpoint.",
+            "default": "http://localhost:11434",
+            "title": "Ollama API endpoint",
+            "workspace": true,
+            "scope": "resource"
+          },
+          "docugen.model-local-api-endpoint-key": {
+            "type": "string",
+            "description": "Ollama API key.",
+            "default": "ollama",
+            "title": "Ollama API key",
+            "workspace": true,
+            "scope": "resource"
+          },
+          "docugen.model-local-model-name": {
+            "type": "string",
+            "description": "Ollama model name. (example: deepseek-coder-v2:latest)",
+            "default": "deepseek-coder-v2:latest",
+            "title": "Ollama model name",
+            "workspace": true,
+            "scope": "resource"
+          },
+          "docugen.model-azure-openai-model-name": {
+            "type": "string",
+            "description": "Azure OpenAI model name. (example: gpt-4o)",
+            "default": "gpt-4o-completions",
+            "title": "OpenAI model name",
+            "workspace": true,
+            "scope": "resource"
+          },
+          "docugen.model-azure-openai-model-api-endpoint": {
+            "type": "string",
+            "description": "Azure OpenAI model endpoint. (example: https://<instance>.openai.azure.com)",
+            "default": "https://vsmodel.openai.azure.com",
+            "title": "OpenAI model endpoint",
+            "workspace": true,
+            "scope": "resource"
+          },
+          "docugen.model-azure-openai-model-api-version": {
+            "type": "string",
+            "description": "Azure OpenAI model name. (example: 2023-03-15-preview)",
+            "default": "2023-03-15-preview",
+            "title": "OpenAI model version",
+            "workspace": true,
+            "scope": "resource"
+          },
+          "docugen.model-azure-openai-model-api-endpoint-key": {
+            "type": "string",
+            "description": "Azure OpenAI API key.",
+            "default": "",
+            "title": "Azure OpenAI API key.",
+            "workspace": true,
+            "scope": "resource"
+          }
+        }
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "webpack",
+    "watch": "webpack --watch",
+    "package": "webpack --mode production --devtool hidden-source-map",
+    "compile-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
+    "pretest": "npm run compile-tests && npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "vscode-test",
+    "problemMatcher": "$tsc",
+    "postinstall": "node ../install-deps.js"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.7",
+    "@types/node": "20.x",
+    "@types/vscode": "^1.92.0",
+    "@typescript-eslint/eslint-plugin": "^7.14.1",
+    "@typescript-eslint/parser": "^7.11.0",
+    "@vscode/test-cli": "^0.0.9",
+    "@vscode/test-electron": "^2.4.0",
+    "eslint": "^8.57.0",
+    "ts-loader": "^9.5.1",
+    "typescript": "^5.4.5",
+    "webpack": "^5.92.1",
+    "webpack-cli": "^5.1.4"
+  },
+  "dependencies": {
+    "docugen": "file:../../Core"
+  }
+}
