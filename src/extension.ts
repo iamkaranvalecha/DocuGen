@@ -2,9 +2,10 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 import * as fs from 'fs';
-import { scanRepository } from './logic';
+import { DocuGen } from './logic/logic';
+import { Providers } from './logic/providers';
 import path from 'path';
-import { Configuration, Constants } from './constants';
+import { Configuration, Constants } from './logic/constants';
 
 const defaultExtension: string = '.md';
 const includedItemsSettingName: string = 'includedItems';
@@ -152,7 +153,7 @@ export function activate(context: vscode.ExtensionContext) {
 							try {
 								progress.report({ message: "Scanning repository for files..." });
 
-								await scanRepository(workspaceFolder, excludeInvalidFiles(excludedItems), excludeInvalidFiles(mastersupportedExtensionsList), excludeInvalidFiles(itemsToBeIncluded), defaultDocumentFileNamePath, progress);
+								await new DocuGen(new Providers()).scanRepository(workspaceFolder, excludeInvalidFiles(excludedItems), excludeInvalidFiles(mastersupportedExtensionsList), excludeInvalidFiles(itemsToBeIncluded), defaultDocumentFileNamePath, progress);
 
 								progress.report({ message: "Please verify the documentation" });
 
