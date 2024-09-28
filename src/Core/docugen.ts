@@ -1,11 +1,11 @@
 import * as path from 'path';
 import * as fs from 'fs';
-import { IModelProvider } from './interfaces/IModelProvider';
-import { FileSection } from './interfaces/FileSection';
+import { IModelProvider } from './providers/IModelProvider';
+import { FileSection } from './models/FileSection';
 import { Constants } from './constants';
-import { IDocuGen } from './interfaces/IDocuGen';
+import { IDocuGenProvider } from './providers/IDocuGenProvider';
 
-export class DocuGen implements IDocuGen {
+export class DocuGen implements IDocuGenProvider {
 
   private modelProvider: IModelProvider;
 
@@ -88,7 +88,7 @@ export class DocuGen implements IDocuGen {
               const originalFileContent = await this.readFileContent(filePath);
               if (originalFileContent.length > 0) {
                 // Analyze the content using the model (e.g., callLanguageModel)
-                const updatedContent: string = await this.generateSummary(this.getSummaryPrompt(), originalFileContent, fileName);
+                const updatedContent: string = await this.modelProvider.sendRequestToModel(this.getSummaryPrompt(), originalFileContent, fileName);
                 if (updatedContent.length > 0) {
                   let finalContent = this.formContentInFormat(filePath, updatedContent)
                   if (appendAtEnd) {
