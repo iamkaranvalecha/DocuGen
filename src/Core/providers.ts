@@ -3,7 +3,7 @@ import { ISecretProvider } from './providers/ISecretProvider';
 import axios from "axios";
 
 export class Providers implements IModelProvider {
-  private secretProvider: ISecretProvider;
+  private secretProvider;
 
   constructor(secretProvider: ISecretProvider) {
     this.secretProvider = secretProvider;
@@ -20,7 +20,7 @@ export class Providers implements IModelProvider {
     }
   }
 
-  async pickProviderBasedOnSetting() {
+  private async pickProviderBasedOnSetting() {
     const provider = await this.secretProvider.getSecret('model-selection');
     return provider;
   }
@@ -33,7 +33,7 @@ export class Providers implements IModelProvider {
    * @param {string} fileName
    * @return {*} 
    */
-  async useLocalOpenAI(prompt: string, content: string, fileName: string) {
+  private async useLocalOpenAI(prompt: string, content: string, fileName: string) {
     let settings: any = {
       "endpoint": await this.secretProvider.getSecret('model-local-api-endpoint-url'),
       "apikey": await this.secretProvider.getSecret('model-local-api-endpoint-key'),
@@ -64,7 +64,7 @@ export class Providers implements IModelProvider {
     }
   }
 
-  async useAzureOpenAI(prompt: string, content: string, fileName: string) {
+  private async useAzureOpenAI(prompt: string, content: string, fileName: string) {
     let settings = {
       "endpoint": await this.secretProvider.getSecret('model-azure-openai-model-api-endpoint'),
       "apiversion": await this.secretProvider.getSecret('model-azure-openai-model-api-version'),
