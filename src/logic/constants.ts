@@ -1,5 +1,3 @@
-import * as vscode from "vscode";
-
 export const Constants = {
   extensionName: "DocuGen",
   prefix: `### File:`,
@@ -72,9 +70,3 @@ export const Constants = {
     "test-reports",
   ],
 };
-
-export function Configuration() {
-  return vscode.workspace.getConfiguration(
-    Constants.extensionName.toLowerCase()
-  );
-}
