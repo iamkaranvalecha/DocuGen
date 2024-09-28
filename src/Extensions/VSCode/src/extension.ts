@@ -2,7 +2,7 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 import * as fs from 'fs';
-import { DocuGen, Providers, Constants } from 'docugen';
+import { DocuGen, Constants } from 'docugen';
 import path from 'path';
 import { VSCodeSecretProvider } from './providers/VSCodeSecretProvider';
 
@@ -151,7 +151,8 @@ export function activate(context: vscode.ExtensionContext) {
 						}, async (progress, token) => {
 							try {
 								progress.report({ message: "Scanning repository for files..." });
-								await new DocuGen(new Providers(getSecretProvider())).scanRepository(workspaceFsPath, excludeInvalidFiles(excludedItems), excludeInvalidFiles(mastersupportedExtensionsList), excludeInvalidFiles(itemsToBeIncluded), defaultDocumentFileNamePath);//progress
+								const instance = new DocuGen(getSecretProvider(), 'VSCode');
+								await instance.scanRepository(workspaceFsPath, excludeInvalidFiles(excludedItems), excludeInvalidFiles(mastersupportedExtensionsList), excludeInvalidFiles(itemsToBeIncluded), defaultDocumentFileNamePath);//progress
 
 								progress.report({ message: "Please verify the documentation" });
 
@@ -256,23 +257,13 @@ function getItemsRecursively(source: string, parent: string = ''): string[] {
 }
 
 function getExcludedFolders(): string[] {
-	let excludedFolders = getConfiguration().get<string[]>(excludedItemsSettingName);
-	const excludedFoldersFromConstant = Constants.excludedFolders;
-	if (excludedFolders === undefined || excludedFolders.length === 0)
-		excludedFolders = excludedFoldersFromConstant;
-	else {
-		excludedFolders.concat(excludedFoldersFromConstant);
-	}
-
-	return excludedFolders;
+	let excludedFolders = getConfiguration().get(excludedItemsSettingName, Constants.excludedFolders);
+	return removeDuplicates(excludedFolders.split(',').concat(Constants.supportedExtensions.split(',')));
 }
 
 function getSupportedExtensions() {
-	let supportedExtensions = getConfiguration().get<string[]>(supportedExtensionsSettingName);
-	if (supportedExtensions === undefined || supportedExtensions.length === 0)
-		supportedExtensions = Constants.supportedExtensions;
-
-	return supportedExtensions;
+	let supportedExtensions = getConfiguration().get(supportedExtensionsSettingName, Constants.supportedExtensions);
+	return removeDuplicates(supportedExtensions.split(',').concat(Constants.supportedExtensions.split(',')));
 }
 
 // Function to determine if a file extension should be excluded

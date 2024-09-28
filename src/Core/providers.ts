@@ -1,28 +1,22 @@
-import { IModelProvider } from './providers/IModelProvider';
+import { SectionConfig } from './models/SectionConfig';
 import { ISecretProvider } from './providers/ISecretProvider';
 import axios from "axios";
 
-export class Providers implements IModelProvider {
+export class Providers {
   private secretProvider;
 
   constructor(secretProvider: ISecretProvider) {
     this.secretProvider = secretProvider;
   }
 
-  async sendRequestToModel(prompt: string, content: string, fileName: string) {
+  async sendRequestToModel(prompt: string, content: string, config: SectionConfig) {
 
-    let provider: any = await this.pickProviderBasedOnSetting();
-    if (provider) {
-      return this.useLocalOpenAI(prompt, content, fileName);
+    if (config.values.useOllama) {
+      return this.useLocalOpenAI(prompt, content, config);
     }
     else {
-      return this.useAzureOpenAI(prompt, content, fileName);
+      return this.useAzureOpenAI(prompt, content, config);
     }
-  }
-
-  private async pickProviderBasedOnSetting() {
-    const provider = await this.secretProvider.getSecret('model-selection');
-    return provider;
   }
 
   /**
@@ -33,11 +27,11 @@ export class Providers implements IModelProvider {
    * @param {string} fileName
    * @return {*} 
    */
-  private async useLocalOpenAI(prompt: string, content: string, fileName: string) {
+  private async useLocalOpenAI(prompt: string, content: string, config: SectionConfig) {
     let settings: any = {
-      "endpoint": await this.secretProvider.getSecret('model-local-api-endpoint-url'),
+      "endpoint": config.values.modelEndpoint,
       "apikey": await this.secretProvider.getSecret('model-local-api-endpoint-key'),
-      "modelName": await this.secretProvider.getSecret('model-local-model-name'),
+      "modelName": config.values.modelName,
     };
     var options = {
       method: 'POST',
@@ -64,11 +58,11 @@ export class Providers implements IModelProvider {
     }
   }
 
-  private async useAzureOpenAI(prompt: string, content: string, fileName: string) {
+  private async useAzureOpenAI(prompt: string, content: string, config: SectionConfig) {
     let settings = {
-      "endpoint": await this.secretProvider.getSecret('model-azure-openai-model-api-endpoint'),
-      "apiversion": await this.secretProvider.getSecret('model-azure-openai-model-api-version'),
-      "model": await this.secretProvider.getSecret('model-azure-openai-model-name'),
+      "endpoint": config.values.modelEndpoint,
+      "apiversion": config.values.modelVersion,
+      "model": config.values.modelName,
       "apikey": await this.secretProvider.getSecret('model-azure-openai-model-api-endpoint-key'),
     };
     var options = {
