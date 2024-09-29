@@ -4,37 +4,33 @@ import { ISecretProvider } from './providers/ISecretProvider';
 import { FileSection } from './models/FileSection';
 import { Constants } from './constants';
 import { Providers } from './providers';
-import { ConfigProvider } from './configprovider';
+import { Enums } from './enums';
+import { SectionConfig } from './models/SectionConfig';
 
 export class DocuGen {
-  private sectionConfig;
-  private configProvider;
   private ISecretProvider: ISecretProvider;
-  private rootDir;
 
-  constructor(ISecretProvider: ISecretProvider, configSectionName: string, rootDir:string) {
-    if (!configSectionName) {
-      throw new Error('Config section is required');
-    }
+  constructor(ISecretProvider: ISecretProvider, configSectionName: Enums, workspacePath: string) {
     if (!ISecretProvider) {
       throw new Error('Secret provider is required');
     }
-    this.rootDir = rootDir;
-    this.configProvider = new ConfigProvider(this.rootDir);
-    this.sectionConfig = this.configProvider.getSection(configSectionName);
+    if (!workspacePath) {
+      throw new Error('Workspace path is empty')
+    }
+
     this.ISecretProvider = ISecretProvider
   }
 
-  async scanRepository(workspaceFsPath: string, excludeItemsFilePaths: string[], excludeExtensionsFilePaths: string[], itemsToBeIncludedFilePaths: (string | undefined)[], documentFilePath: string) {
+  async scanRepository(sectionConfig: SectionConfig, workspacePath: string, excludeItemsFilePaths: string[], excludeExtensionsFilePaths: string[], itemsToBeIncludedFilePaths: (string | undefined)[], documentFilePath: string) {
     try {
-      console.log('Scanning repository:', workspaceFsPath);
-      const fileExists = await this.checkIfFileExists(workspaceFsPath, documentFilePath);
+      console.log('Scanning repository:', workspacePath);
+      const fileExists = await this.checkIfFileExists(workspacePath, documentFilePath);
       console.log('Document file exists:', fileExists);
       if (fileExists === false && itemsToBeIncludedFilePaths !== undefined && itemsToBeIncludedFilePaths.length > 0) {
-        const documentation = await this.generateDocumentation(itemsToBeIncludedFilePaths);
+        const documentation = await this.generateDocumentation(workspacePath, itemsToBeIncludedFilePaths, sectionConfig);
 
         if (documentation.length > 0) {
-          await this.writeToFile(workspaceFsPath, documentation, documentFilePath);
+          await this.writeToFile(workspacePath, documentation, documentFilePath);
         }
         else {
           throw new Error("Unable to generate documentation");
@@ -42,7 +38,7 @@ export class DocuGen {
       }
       else {
         // Read the file & split in sections based on '### File:' format
-        let fileContent = await this.readDocumentationFileContent(workspaceFsPath, documentFilePath);
+        let fileContent = await this.readDocumentationFileContent(workspacePath, documentFilePath);
         if (!fileContent) {
           return;
         }
@@ -59,24 +55,31 @@ export class DocuGen {
             // Use regex to find section start and end
             const regex = /^(.*?\\[\w\s]+(?:\\[\w\s]+)*\.\w+)\n([\s\S]*)/;
             const match = regex.exec(section);
+            let filePath = '';
+            let content = '';
             if (match) {
-              const filePath = match[1].trim(); // Extract the file path
-              const content = match[2].trim(); // Extract the content after the file path
-              const fileName = this.getFileNameFromPath(filePath);
-
-              // Track the file paths in the current content
-              filePathsInFile.push(filePath);
-
-              const isIncluded = itemsToBeIncludedFilePaths.includes(filePath) && !excludeExtensionsFilePaths.includes(filePath);
-
-              crossCheckSectionsAgainstIncludedItems.push({
-                fileName: fileName,
-                filePath: filePath,
-                section: section,
-                toBeAnalysed: isIncluded,
-                appendAtEnd: false
-              });
+              filePath = match[1].trim(); // Extract the file path
+              content = match[2].trim(); // Extract the content after the file path
             }
+            else {
+              filePath = section.split(Constants.newLine)[0].trim();
+              content = section.split(filePath)[1].trim();
+            }
+
+            const fileName = this.getFileNameFromPath(filePath);
+
+            // Track the file paths in the current content
+            filePathsInFile.push(filePath);
+
+            const isIncluded = itemsToBeIncludedFilePaths.includes(filePath) && !excludeExtensionsFilePaths.includes(filePath);
+
+            crossCheckSectionsAgainstIncludedItems.push({
+              fileName: fileName,
+              filePath: filePath,
+              section: section,
+              toBeAnalysed: isIncluded,
+              appendAtEnd: false
+            });
           }
 
           // Handle files to be added if not already present
@@ -97,10 +100,16 @@ export class DocuGen {
             const { filePath, fileName, section, toBeAnalysed, appendAtEnd } = item;
 
             if (toBeAnalysed) {
-              const originalFileContent = await this.readFileContent(filePath);
+              const originalFileContent = await this.readFileContent(workspacePath + filePath);
               if (originalFileContent.length > 0) {
-                // Analyze the content using the model (e.g., callLanguageModel)
-                const updatedContent: string = await new Providers(this.ISecretProvider).sendRequestToModel(this.getSummaryPrompt(), originalFileContent, this.sectionConfig);
+                let updatedContent = '';
+                try {
+                  updatedContent = await new Providers(this.ISecretProvider).sendRequestToModel(this.getSummaryPrompt(), originalFileContent, sectionConfig);
+                }
+                catch (error) {
+                  console.log(error);
+                  updatedContent = "`Unable to generate documentation. Please try again later.`"
+                }
                 if (updatedContent.length > 0) {
                   let finalContent = this.formContentInFormat(filePath, updatedContent)
                   if (appendAtEnd) {
@@ -130,7 +139,7 @@ export class DocuGen {
         }
 
         // Write back the updated content to the file
-        await this.writeToFile(workspaceFsPath, fileContent, documentFilePath);
+        await this.writeToFile(workspacePath, fileContent, documentFilePath);
       }
     }
     catch (exception) {
@@ -159,7 +168,7 @@ export class DocuGen {
 
   private async readFileContent(filePath: string) {
     try {
-      const data = await fs.promises.readFile(filePath, 'utf8');
+      const data = await fs.promises.readFile(filePath.trim(), 'utf8');
       return data;
     }
     catch (error) {
@@ -170,7 +179,7 @@ export class DocuGen {
     try {
       filePath = path.join(workspaceFolder, filePath);
       console.log('Reading file:', filePath);
-      const data = await fs.promises.readFile(filePath, 'utf8');
+      const data = await fs.promises.readFile(filePath.trim(), 'utf8');
       return data;
     }
     catch (error) {
@@ -183,30 +192,31 @@ export class DocuGen {
 
     try {
       filePath = path.join(workspaceFolder, filePath);
-      await fs.promises.readFile(filePath);
+      await fs.promises.readFile(filePath.trim());
       return true;
     } catch (error) {
       return false;
     }
   }
 
-  private async generateDocumentation(files: (string | undefined)[]): Promise<string> {
+  private async generateDocumentation(workspacePath: string, files: (string | undefined)[], sectionConfig: SectionConfig): Promise<string> {
     let documentation = '';
-    documentation = await this.generateFileLevelDocumentation(files);
+    documentation = await this.generateFileLevelDocumentation(workspacePath, files, sectionConfig);
     return documentation;
   }
 
-  private async generateFileLevelDocumentation(files: (string | undefined)[]): Promise<string> {
+  private async generateFileLevelDocumentation(workspacePath: string, files: (string | undefined)[], sectionConfig: SectionConfig): Promise<string> {
     let fileDocumentation = Constants.fileTitle;
     console.log('Generating documentation for files:', files);
     for (const file of this.excludeInvalidFiles(files)) {
       if (file !== undefined) {
-        console.log('Generating documentation for current file: ', file)
-        const document = fs.readFileSync(file, 'utf8');
+        const filePath = path.join(workspacePath, file);
+        console.log('Generating documentation for current file: ', filePath)
+        const document = fs.readFileSync(filePath.trim(), 'utf8');
 
         console.log('file content:', document);
         // Generate a summary for each file's content
-        const summary = await new Providers(this.ISecretProvider).sendRequestToModel(this.getSummaryPrompt(), document, this.sectionConfig);
+        const summary = await new Providers(this.ISecretProvider).sendRequestToModel(this.getSummaryPrompt(), document, sectionConfig);
 
         console.log('Summary generated')
         fileDocumentation += this.formContentInFormat(file, summary);
@@ -227,7 +237,7 @@ export class DocuGen {
 
   private async writeToFile(workspaceFolder: string, content: string, documentFileName: string) {
     try {
-      const filePath = path.join(workspaceFolder, documentFileName);
+      const filePath = path.join(workspaceFolder, documentFileName).trim();
       // Check if the directory exists
       if (!fs.existsSync(path.dirname(filePath))) {
         await fs.promises.mkdir(path.dirname(filePath), { recursive: true });
