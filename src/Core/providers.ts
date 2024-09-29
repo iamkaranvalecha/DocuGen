@@ -10,7 +10,7 @@ export class Providers {
   }
 
   async sendRequestToModel(prompt: string, content: string, config: SectionConfig) {
-
+    console.log('sasw!!1', config)
     if (config.values.useOllama) {
       return this.useLocalOpenAI(prompt, content, config);
     }

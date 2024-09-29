@@ -10,16 +10,17 @@ export class DocuGen {
   private sectionConfig;
   private configProvider;
   private ISecretProvider: ISecretProvider;
+  private rootDir;
 
-  constructor(ISecretProvider: ISecretProvider, configSectionName: string) {
+  constructor(ISecretProvider: ISecretProvider, configSectionName: string, rootDir:string) {
     if (!configSectionName) {
       throw new Error('Config section is required');
     }
     if (!ISecretProvider) {
       throw new Error('Secret provider is required');
     }
-
-    this.configProvider = new ConfigProvider();
+    this.rootDir = rootDir;
+    this.configProvider = new ConfigProvider(this.rootDir);
     this.sectionConfig = this.configProvider.getSection(configSectionName);
     this.ISecretProvider = ISecretProvider
   }

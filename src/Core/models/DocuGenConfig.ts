@@ -4,8 +4,8 @@ import { SectionConfig } from "./SectionConfig"
 import { ConfigNotFoundError } from '../exceptions/exceptions';
 
 export class DocuGenConfig {
-    constructor() {
-        const filePath = Constants.configFileName;
+    constructor(rootDir:string) {
+        const filePath = rootDir + Constants.configFileName;
         if (this.checkIfFileExists(filePath) == false) {
             const fileContents = fs.readFileSync(filePath, 'utf-8');
             this.sections = JSON.parse(fileContents);

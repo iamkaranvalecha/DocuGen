@@ -151,7 +151,7 @@ export function activate(context: vscode.ExtensionContext) {
 						}, async (progress, token) => {
 							try {
 								progress.report({ message: "Scanning repository for files..." });
-								const instance = new DocuGen(getSecretProvider(), 'VSCode');
+								const instance = new DocuGen(getSecretProvider(), 'VSCode',workspacePathPrefix);
 								await instance.scanRepository(workspaceFsPath, excludeInvalidFiles(excludedItems), excludeInvalidFiles(mastersupportedExtensionsList), excludeInvalidFiles(itemsToBeIncluded), defaultDocumentFileNamePath);//progress
 
 								progress.report({ message: "Please verify the documentation" });
