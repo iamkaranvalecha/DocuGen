@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import { Constants } from "../constants";
 import { SectionConfig } from "./SectionConfig"
-import { ConfigNotFoundError } from '../exceptions/exceptions';
+// import { ConfigNotFoundError } from '../exceptions/exceptions';
 
 export class DocuGenConfig {
     constructor(rootDir:string) {

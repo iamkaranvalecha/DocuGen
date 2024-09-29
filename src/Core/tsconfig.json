@@ -3,15 +3,16 @@
 	  "module": "commonjs",
 	  "target": "es6",
 	  "lib": ["ES2020"],
-	  "outDir": "dist",
-	  "rootDir": "",
+	  "outDir": "./dist",
+	  "rootDir": "./src",
 	  "sourceMap": true,
 	  "strictPropertyInitialization": false,
-	  "declaration": true,
 	  "resolveJsonModule": true,
 	  "skipLibCheck": true,
 	  "experimentalDecorators": true,
-	  "esModuleInterop": true
+	  "esModuleInterop": true,
+	  "composite": true
 	},
-	"exclude": ["node_modules", ".vscode-test", "_code-dep"],
+	"include": ["src/**/*"],
+	"exclude": ["node_modules", ".vscode-test", "_code-dep","dist"],
 }
