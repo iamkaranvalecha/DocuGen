@@ -1,11 +1,14 @@
+import { Constants } from "../constants";
+import { Enums } from "../enums";
+
 export class SectionConfig {
-    constructor() {
-        this.name = '';
+    constructor(name: Enums) {
+        this.name = name;
         this.values = {
-            excludeItemsFilePaths: [],
-            excludeExtensionsFilePaths: [],
-            itemsToBeIncludedFilePaths: [],
-            documentFilePath: '',
+            defaultDocumentFileName: Constants.extensionName,
+            includedItems: "",
+            excludedItems: "",
+            supportedExtensions: "",
             useOllama: false,
             modelEndpoint: '',
             modelName: '',
@@ -13,12 +16,12 @@ export class SectionConfig {
         };
     }
 
-    name: string;
+    name: Enums;
     values: {
-        excludeItemsFilePaths: string[];
-        excludeExtensionsFilePaths: string[];
-        itemsToBeIncludedFilePaths: string[];
-        documentFilePath: string;
+        defaultDocumentFileName: string,
+        includedItems: string;
+        excludedItems: string;
+        supportedExtensions: string;
         useOllama: boolean;
         modelEndpoint: string;
         modelName: string;

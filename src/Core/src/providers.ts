@@ -11,7 +11,7 @@ export class Providers {
 
   async sendRequestToModel(prompt: string, content: string, config: SectionConfig) {
     if (config.values.useOllama) {
-      return this.useLocalOpenAI(prompt, content, config);
+      return this.useOllama(prompt, content, config);
     }
     else {
       return this.useAzureOpenAI(prompt, content, config);
@@ -19,14 +19,14 @@ export class Providers {
   }
 
   /**
-   * Use Local OpenAI Compliant API to generate summary
+   * Use Ollama Compliant API to generate summary
    *
    * @param {string} prompt
    * @param {string} content
    * @param {string} fileName
    * @return {*} 
    */
-  private async useLocalOpenAI(prompt: string, content: string, config: SectionConfig) {
+  private async useOllama(prompt: string, content: string, config: SectionConfig) {
     let settings: any = {
       "endpoint": config.values.modelEndpoint,
       "apikey": await this.secretProvider.getSecret('model-local-api-endpoint-key'),
@@ -51,7 +51,7 @@ export class Providers {
       return response.data.response;
     }
     catch (error) {
-      return error;
+      throw error;
     }
   }
 
@@ -88,7 +88,7 @@ export class Providers {
       return response.data.choices[0].message.content;
     }
     catch (error) {
-      return error;
+      throw error;
     }
   }
 }

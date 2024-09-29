@@ -1,13 +1,13 @@
-import { Constants } from 'docugen';
+import { Constants, DocuGenConfig } from 'docugen';
 import * as fs from 'fs';
 
 export class ConfigProvider {
 
-    private readConfigFile() {
-        return fs.readFileSync(Constants.configFileName).toJSON();
+    private readConfigFile(workspacePath: string) : DocuGenConfig {
+        return JSON.parse(fs.readFileSync(workspacePath + Constants.configFileName).toString());
     }
 
-    getConfiguration() {
-        return this.readConfigFile();
+    getConfiguration(workspacePath: string) {
+        return this.readConfigFile(workspacePath);
     }
 }
