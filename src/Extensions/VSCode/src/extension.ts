@@ -29,9 +29,9 @@ export function activate(context: vscode.ExtensionContext) {
 				let masterExcludeItemsList: string[] = getExcludedFolders();
 				if (masterExcludeItemsList.length > 0) {
 					for (const item of [defaultDocumentFileNamePath, 'node_modules', '.vscode', '.git', '.gitignore']) {
-						const itemPath = workspacePathPrefix + item
+						const itemPath = workspacePathPrefix + item;
 						if (item !== '' && !masterExcludeItemsList.includes(itemPath)) {
-							masterExcludeItemsList.push(itemPath)
+							masterExcludeItemsList.push(itemPath);
 						}
 					}
 				}
@@ -66,8 +66,9 @@ export function activate(context: vscode.ExtensionContext) {
 
 						// Remove duplicates by converting to a Set
 						for (const item of gitExcludeItemsList) {
-							if (!masterExcludeItemsList.includes(item.trim()))
+							if (!masterExcludeItemsList.includes(item.trim())){
 								masterExcludeItemsList.push(item.trim());
+							}
 						}
 					} catch (error) {
 						console.log('No .gitignore file found');
@@ -79,7 +80,7 @@ export function activate(context: vscode.ExtensionContext) {
 				quickPick.title = 'Select files and folders to exclude from document generation';
 				quickPick.placeholder = 'Exclude files and folders to exclude from document generation';
 				quickPick.ignoreFocusOut = true;
-				quickPick.step = 1
+				quickPick.step = 1;
 				quickPick.totalSteps = 1;
 				// Get all directories and files recursively 
 				const items = excludeInvalidFiles(getItemsRecursively(workspaceFsPath));
@@ -179,7 +180,7 @@ export function activate(context: vscode.ExtensionContext) {
 export function deactivate() { }
 
 function excludeInvalidFiles(files: string[]) {
-	return files.filter(x => path.extname(x) !== '')
+	return files.filter(x => path.extname(x) !== '');
 }
 
 function removeDuplicates(arr: string[]): string[] {
