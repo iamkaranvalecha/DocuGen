@@ -10,7 +10,6 @@ export class Providers {
   }
 
   async sendRequestToModel(prompt: string, content: string, config: SectionConfig) {
-    console.log('sasw!!1', config)
     if (config.values.useOllama) {
       return this.useLocalOpenAI(prompt, content, config);
     }
@@ -49,11 +48,9 @@ export class Providers {
 
     try {
       var response = await axios.request(options);
-      console.log(response.data.response);
       return response.data.response;
     }
     catch (error) {
-      console.log(error);
       return error;
     }
   }
@@ -91,7 +88,6 @@ export class Providers {
       return response.data.choices[0].message.content;
     }
     catch (error) {
-      console.log(error);
       return error;
     }
   }
