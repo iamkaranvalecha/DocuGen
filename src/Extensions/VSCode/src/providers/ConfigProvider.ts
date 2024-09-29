@@ -4,7 +4,7 @@ import * as fs from 'fs';
 export class ConfigProvider {
 
     private readConfigFile() {
-        return fs.readFileSync(Constants.configFileName).toJSON()
+        return fs.readFileSync(Constants.configFileName).toJSON();
     }
 
     getConfiguration() {

@@ -5,8 +5,8 @@ import { InvalidSectionConfigError } from "./exceptions/exceptions";
 export class ConfigProvider {
     private rootConfig: DocuGenConfig;
 
-    constructor() {
-        this.rootConfig = new DocuGenConfig();
+    constructor(rootDir:string) {
+        this.rootConfig = new DocuGenConfig(rootDir);
     }
 
     getSection(sectionName: string): SectionConfig {
