@@ -8,6 +8,7 @@ export class SectionConfig {
             defaultDocumentFileName: Constants.extensionName,
             includedItems: "",
             excludedItems: "",
+            uncheckedItems: "",
             supportedExtensions: "",
             useOllama: false,
             modelEndpoint: '',
@@ -21,6 +22,7 @@ export class SectionConfig {
         defaultDocumentFileName: string,
         includedItems: string;
         excludedItems: string;
+        uncheckedItems: string,
         supportedExtensions: string;
         useOllama: boolean;
         modelEndpoint: string;

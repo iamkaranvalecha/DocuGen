@@ -9,7 +9,7 @@ export class DocuGenConfig {
         this.configFilePath = filePath;
         if (this.checkIfFileExists(filePath) == false) {
             this.sections = [defaultConfig];
-            this.writeConfigFile(this.sections);
+            this.writeToConfigFile(this.sections);
         }
         else {
             const fileContents = fs.readFileSync(filePath, 'utf-8');
@@ -24,33 +24,42 @@ export class DocuGenConfig {
         return this.sections.filter(x => x.name == sectionName)[0].values[settingName] ?? defaultValue;
     }
 
-    update(sectionName: Enums, settingName: SettingEnums, value: string) {
+    update(sectionName: Enums, settingName: SettingEnums, newValue: string) {
         const fileContents = fs.readFileSync(this.configFilePath, 'utf-8');
-        const existingSections: SectionConfig[] = JSON.parse(fileContents);
+        let existingSections: SectionConfig[] = JSON.parse(fileContents);
 
         if (this.sections.filter(x => x.name == sectionName).length == 0) {
             let newSection = new SectionConfig(sectionName);
-            newSection.values[settingName] = value;
+            newSection.values[settingName] = newValue;
             existingSections.push(newSection);
         }
         else {
             existingSections.map((x) => {
                 if (x.name == sectionName) {
                     const existingValue: string = x.values[settingName];
-                    if (existingValue && existingValue.includes(','))
-                        x.values[settingName] = [...new Set(existingValue.split(',').filter(x => x.trim() != "").concat(value))].join();
+                    if (existingValue && existingValue.includes(',')) {
+                        const newValueArray = newValue.split(',').filter(x => x.trim() != "");
+                        const uniqueValues = this.removeDuplicates(newValueArray);
+
+                        x.values[settingName] = uniqueValues.join();
+                    }
                     else
-                        x.values[settingName] = value;
+                        x.values[settingName] = newValue;
                 }
             });
         }
 
         this.sections = existingSections;
-        this.writeConfigFile(this.sections);
+        this.writeToConfigFile(this.sections);
     }
 
-    private writeConfigFile(sections: SectionConfig[]) {
-        fs.writeFileSync(this.configFilePath, JSON.stringify(sections, null, 2), 'utf-8');
+    removeDuplicates(arr: string[]): string[] {
+        return [...new Set(arr.filter(item => item.trim() !== ''))];
+    }
+
+    writeToConfigFile(sections: SectionConfig[]) {
+        if(sections != undefined)
+            fs.writeFileSync(this.configFilePath, JSON.stringify(sections, null, 2), 'utf-8');
     }
 
     private checkIfFileExists(filePath: string): boolean {

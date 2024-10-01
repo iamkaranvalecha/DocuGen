@@ -21,59 +21,18 @@ export function activate(context: vscode.ExtensionContext) {
 				const workspacePathPrefix = workspaceFsPath + "\\";
 				const defaultDocumentFileNameSettingName = SettingEnums.DefaultDocumentFileName;
 				const docuGenConfig = new ConfigProvider(workspacePathPrefix, new SectionConfig(Enums.VSCode)).getConfig();
-				const sectionConfig = docuGenConfig.sections.filter(x => x.name == Enums.VSCode)[0];
+				const sectionConfig = docuGenConfig.sections.filter(x => x.name === Enums.VSCode)[0];
 				const defaultDocumentFileNameConfig = docuGenConfig.get(Enums.VSCode, defaultDocumentFileNameSettingName, DocuGenConstants.extensionName);
 				const defaultDocumentFileName: string = defaultDocumentFileNameConfig;
 				const defaultDocumentFileNamePath = defaultDocumentFileName + defaultExtension;
-				const uncheckedItems = docuGenConfig.get(Enums.VSCode, SettingEnums.UncheckedItems, "");
 
-				let masterExcludeItemsList: string[] = getExcludedFolders(docuGenConfig);
-				if (masterExcludeItemsList.length > 0) {
-					for (const item of [defaultDocumentFileNamePath, 'node_modules', '.vscode', '.git', '.gitignore']) {
-						const itemPath = workspacePathPrefix + item;
-						if (item !== '' && !masterExcludeItemsList.includes(itemPath)) {
-							masterExcludeItemsList.push(itemPath);
-						}
-					}
-				}
-				else {
-					for (const item of masterExcludeItemsList) {
-						if (item !== '' && !masterExcludeItemsList.includes(item)) {
-							const itemPath = workspacePathPrefix + item;
-							masterExcludeItemsList.push(itemPath);
-						}
-					}
-				}
-				let mastersupportedExtensionsList: string[] = getSupportedExtensions(docuGenConfig);
-				for (const item of mastersupportedExtensionsList) {
-					if (item !== '' && !mastersupportedExtensionsList.includes(item)) {
-						mastersupportedExtensionsList.push(item);
-					}
-				}
+				let uncheckedItems = getUncheckedItems(docuGenConfig);
+				let excludedItems: string[] = getExcludedItems(docuGenConfig);
+				let supportedExtensions: string[] = getSupportedExtensions(docuGenConfig);
+				const allFiles = getItemsRecursively(docuGenConfig, excludedItems, workspaceFsPath);
 
-				// Read .gitignore file if present & exclude the folders & extensions
-				const gitIgnorePath = workspaceFsPath + '/.gitignore';
-				let gitIgnoreContent = '';
-				if (gitIgnorePath) {
-					try {
-						gitIgnoreContent = await vscode.workspace.fs.readFile(vscode.Uri.file(gitIgnorePath)).then(content => {
-							return Buffer.from(content).toString();
-						});
-						const gitExcludeItemsList = gitIgnoreContent
-							.split('\n')
-							.filter(line => (line.trim().startsWith('/') || line.trim().endsWith('/')))
-							.map(folder => folder.trim())
-							.filter(folder => !masterExcludeItemsList.includes(folder.trim()));
-
-						// Remove duplicates by converting to a Set
-						for (const item of gitExcludeItemsList) {
-							if (!masterExcludeItemsList.includes(item.trim())) {
-								masterExcludeItemsList.push(item.trim());
-							}
-						}
-					} catch (error) {
-						console.log('No .gitignore file found');
-					}
+				if (allFiles.includes('.gitignore')) {
+					getGitIgnoreItems(workspaceFsPath, excludedItems);
 				}
 
 				// Show user a quick pick with only folder list to exclude
@@ -83,8 +42,9 @@ export function activate(context: vscode.ExtensionContext) {
 				quickPick.ignoreFocusOut = true;
 				quickPick.step = 1;
 				quickPick.totalSteps = 1;
+
 				// Get all directories and files recursively 
-				const items = excludeInvalidFiles(getItemsRecursively(docuGenConfig, workspaceFsPath));
+				const items = excludeInvalidFiles(allFiles);
 				quickPick.items = items.map(item => {
 					const fullPath = path.join(workspaceFsPath, item);
 					const isDirectory = fs.statSync(fullPath).isDirectory();
@@ -100,14 +60,14 @@ export function activate(context: vscode.ExtensionContext) {
 				});
 				quickPick.canSelectMany = true;
 				// Pre-select an item by setting it in `selectedItems` (not `activeItems`).
-				let matchingItems: vscode.QuickPickItem[] = [];
+				let itemsToBeSelected: vscode.QuickPickItem[] = [];
 				quickPick.items.forEach((item) => {
-					if (!masterExcludeItemsList.includes(item.description?.trim()) && ![...new Set(uncheckedItems)].includes(item.label?.trim())) {
-						matchingItems.push(item);  // Pre-select items that are NOT in the exclusion list (i.e., items to be included)
+					if (!excludedItems.includes(item.label?.trim()) && !uncheckedItems.includes(item.label?.trim())) {
+						itemsToBeSelected.push(item);  // Pre-select items that are NOT in the exclusion list (i.e., items to be included)
 					}
 				});
 
-				quickPick.selectedItems = matchingItems;  // Pre-select the items to be included
+				quickPick.selectedItems = itemsToBeSelected;  // Pre-select the items to be included
 				let currentlySelectedItems: Set<string> = new Set(); // Tracks currently selected items 
 				quickPick.onDidChangeSelection(selection => {
 					const selectedItems = new Set(selection.map(item => item.label));
@@ -136,17 +96,23 @@ export function activate(context: vscode.ExtensionContext) {
 				});
 				quickPick.onDidAccept(async () => {
 					const selectedItems = quickPick.selectedItems;
-					const itemsToBeIncluded = selectedItems.map(item => item.label) ?? undefined;
+					let itemsToBeIncluded = selectedItems.map(item => item.label) ?? undefined;
 
 					if (itemsToBeIncluded !== undefined && itemsToBeIncluded.length > 0) {
 						let uncheckedItems = quickPick.items
 							.filter(item => !selectedItems.includes(item))
 							.map(item => item.label);
 
-						docuGenConfig.update(Enums.VSCode, SettingEnums.IncludedItems, removeDuplicates(itemsToBeIncluded).join());
-						docuGenConfig.update(Enums.VSCode, SettingEnums.UncheckedItems, removeDuplicates(uncheckedItems).join());
-						docuGenConfig.update(Enums.VSCode, SettingEnums.ExcludedItems, removeDuplicates(uncheckedItems.concat(DocuGenConstants.excludedItems)).join());
-						docuGenConfig.update(Enums.VSCode, SettingEnums.SupportedExtensions, removeDuplicates(mastersupportedExtensionsList).join());
+						// Update the configuration with the selected items
+						itemsToBeIncluded = removeDuplicates(itemsToBeIncluded);
+						uncheckedItems = removeDuplicates(uncheckedItems);
+						excludedItems = removeDuplicates(excludedItems.concat(DocuGenConstants.excludedItems.split(',')));
+						supportedExtensions = removeDuplicates(supportedExtensions);
+
+						docuGenConfig.update(Enums.VSCode, SettingEnums.IncludedItems, itemsToBeIncluded.join());
+						docuGenConfig.update(Enums.VSCode, SettingEnums.UncheckedItems, uncheckedItems.join());
+						docuGenConfig.update(Enums.VSCode, SettingEnums.ExcludedItems, excludedItems.join());
+						docuGenConfig.update(Enums.VSCode, SettingEnums.SupportedExtensions, supportedExtensions.join());
 
 						vscode.window.withProgress({
 							location: vscode.ProgressLocation.Notification,
@@ -156,13 +122,12 @@ export function activate(context: vscode.ExtensionContext) {
 								progress.report({ message: "Generating documentation for selected files..." });
 								await new DocuGen(
 									getSecretProvider(),
-									Enums.VSCode,
 									workspacePathPrefix
 								).scanRepository(
 									sectionConfig,
 									workspacePathPrefix,
 									excludeInvalidFiles(uncheckedItems),
-									excludeInvalidFiles(mastersupportedExtensionsList),
+									excludeInvalidFiles(supportedExtensions),
 									excludeInvalidFiles(itemsToBeIncluded),
 									defaultDocumentFileNamePath);
 
@@ -224,13 +189,12 @@ function getFileIcon(extension: string): string {
 }
 
 // Function to get all directories and files recursively 
-function getItemsRecursively(docuGenConfig: DocuGenConfig, source: string, parent: string = ''): string[] {
+function getItemsRecursively(docuGenConfig: DocuGenConfig, excludedItems: string[], source: string, parent: string = ''): string[] {
 	let itemsList: string[] = [];
 
 	try {
 		const items = fs.readdirSync(source);
-		const folderExclusions = getExcludedFolders(docuGenConfig);
-		const filteredItems = items.filter(x => !folderExclusions.includes(x));
+		const filteredItems = removeDuplicates(items.filter(x => !excludedItems.includes(x)));
 		for (const item of filteredItems) {
 			// Exclude items starting with a dot ('.')
 			if (item.startsWith('.')) {
@@ -245,7 +209,7 @@ function getItemsRecursively(docuGenConfig: DocuGenConfig, source: string, paren
 				itemsList.push(relativePath);
 
 				// Recursively get subdirectories and files 
-				itemsList = itemsList.concat(getItemsRecursively(docuGenConfig, fullPath, relativePath));
+				itemsList = itemsList.concat(getItemsRecursively(docuGenConfig, excludedItems, fullPath, relativePath));
 			} else {
 				// Add the file to the list
 				const ext = path.extname(item).toLowerCase();
@@ -266,14 +230,46 @@ function getItemsRecursively(docuGenConfig: DocuGenConfig, source: string, paren
 	return itemsList;
 }
 
-function getExcludedFolders(docuGenConfig: DocuGenConfig): string[] {
+function getGitIgnoreItems(workspaceFsPath: string, excludedItems: string[]): string[] {
+	// Read .gitignore file if present & exclude the folders & extensions
+	const gitIgnorePath = workspaceFsPath + '/.gitignore';
+	let gitIgnoreContent = '';
+	if (gitIgnorePath) {
+		try {
+			gitIgnoreContent = fs.readFileSync(gitIgnorePath).toString();
+			const gitExcludeItemsList = gitIgnoreContent
+				.split('\n')
+				.filter(line => (line.trim().startsWith('/') || line.trim().endsWith('/')))
+				.map(folder => folder.trim())
+				.filter(folder => !excludedItems.includes(folder.trim()));
+
+			// Remove duplicates by converting to a Set
+			for (const item of gitExcludeItemsList) {
+				if (!excludedItems.includes(item.trim())) {
+					excludedItems.push(item.trim());
+				}
+			}
+		} catch (error) {
+			console.log('No .gitignore file found');
+		}
+	}
+
+	return excludedItems;
+}
+
+function getExcludedItems(docuGenConfig: DocuGenConfig): string[] {
 	let excludedFolders = docuGenConfig.get(Enums.VSCode, SettingEnums.ExcludedItems, DocuGenConstants.excludedItems);
-	return removeDuplicates(excludedFolders.split(','));
+	return removeDuplicates(excludedFolders.split(',').concat(DocuGenConstants.excludedItems.split(',')).filter(x => x.trim() !== ''));
+}
+
+function getUncheckedItems(docuGenConfig: DocuGenConfig): string[] {
+	let excludedFolders = docuGenConfig.get(Enums.VSCode, SettingEnums.UncheckedItems, "");
+	return removeDuplicates(excludedFolders.split(',').filter(x => x.trim() !== ''));
 }
 
 function getSupportedExtensions(docuGenConfig: DocuGenConfig) {
 	let supportedExtensions = docuGenConfig.get(Enums.VSCode, SettingEnums.SupportedExtensions, DocuGenConstants.supportedExtensions);
-	return removeDuplicates(supportedExtensions.split(',').concat(DocuGenConstants.supportedExtensions.split(',')));
+	return removeDuplicates(supportedExtensions.split(',').concat(DocuGenConstants.supportedExtensions.split(',')).filter(x => x.trim() !== ''));
 }
 
 // Function to determine if a file extension should be excluded
