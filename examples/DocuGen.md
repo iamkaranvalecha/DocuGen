@@ -1,601 +1,729 @@
 ### AI Generated Documentation using DocuGen
 ----
 ### File: CatalogItemService.cs
-### Summary
+### Code Overview: `CatalogItemService`
 
-This file defines the `CatalogItemService` class, which provides an interface for interacting with Amazon's catalog items through Amazon's Selling Partner API. Below is a breakdown of the key methods and their purposes:
+This code file defines the `CatalogItemService` class, which is part of the `FikaAmazonAPI` namespace and provides various methods to interact with the Amazon Catalog Items API. Below is a breakdown of each method and its primary functions:
 
-### Class: CatalogItemService
+1. **Constructor**
+   ```csharp
+   public CatalogItemService(AmazonCredential amazonCredential) : base(amazonCredential)
+   ```
+   - Initializes the `CatalogItemService` with Amazon credentials by calling the base class constructor.
 
-Inherits from `RequestService` and includes the following methods:
+2. **Deprecated Methods (Obsolete)**
+   - These methods have been marked as obsolete and should be replaced with their newer counterparts:
+     ```csharp
+     [Obsolete("This method deprecated in June 2022. Please use SearchCatalogItems202204 instead.", false)]
+     public IList<Item> ListCatalogItems(ParameterListCatalogItems parameterListCatalogItems);
 
-#### Constructor
+     [Obsolete("This method deprecated in June 2022. Please use SearchCatalogItems202204Async instead.", false)]
+     public async Task<IList<Item>> ListCatalogItemsAsync(ParameterListCatalogItems parameterListCatalogItems);
 
-- **CatalogItemService(AmazonCredential amazonCredential)**
-  - Initializes the service with Amazon credentials.
+     [Obsolete("This method deprecated in June 2022. Please use GetCatalogItem(ParameterGetCatalogItem parameterListCatalogItem) instead.", true)]
+     public Item GetCatalogItem(string asin);
 
-#### Deprecated Methods (List and Get Catalog Items)
+     [Obsolete("This method deprecated in June 2022. Please use GetCatalogItem(ParameterGetCatalogItem parameterListCatalogItem) instead.", true)]
+     public async Task<Item> GetCatalogItemAsync(string asin);
+     ```
+   - Note: These methods are not recommended for use due to their deprecated status.
 
-- **ListCatalogItems(ParameterListCatalogItems parameterListCatalogItems)** (Obsolete)
-  - Deprecated in June 2022. Synchronous version of listing catalog items.
-  
-- **ListCatalogItemsAsync(ParameterListCatalogItems parameterListCatalogItems)** (Obsolete)
-  - Deprecated in June 2022. Asynchronous version of listing catalog items.
-  
-- **GetCatalogItem(string asin)** (Obsolete)
-  - Deprecated in June 2022. Synchronous version of getting a single catalog item.
-  
-- **GetCatalogItemAsync(string asin)** (Obsolete)
-  - Deprecated in June 2022. Asynchronous version of getting a single catalog item.
+3. **GetCatalogItemJson / GetCatalogItemAsyncJson**
+   ```csharp
+   public String GetCatalogItemJson(string asin);
+   public async Task<String> GetCatalogItemAsyncJson(string asin);
+   ```
+   - Synchronously and asynchronously retrieves catalog item data in JSON format using the provided ASIN.
 
-#### Catalog Item Retrieval
+4. **ListCatalogCategories / ListCatalogCategoriesAsync**
+   ```csharp
+   public IList<Categories> ListCatalogCategories(string ASIN, string SellerSKU = null, string MarketPlaceID = null);
+   public async Task<IList<Categories>> ListCatalogCategoriesAsync(string ASIN, string SellerSKU = null, string MarketPlaceID = null, CancellationToken cancellationToken = default);
+   ```
+   - Synchronously and asynchronously retrieves the catalog categories for a given ASIN, with optional SellerSKU and MarketPlaceID.
 
-- **GetCatalogItemJson(string asin)**
-  - Synchronous method to get a catalog item in JSON format.
+### Newer Methods for Catalog Items API (Post-20220401)
 
-- **GetCatalogItemAsyncJson(string asin)**
-  - Asynchronous method to get a catalog item in JSON format.
+5. **GetCatalogItem202204 / GetCatalogItem202204Async**
+   ```csharp
+   public AmazonSpApiSDK.Models.CatalogItems.V20220401.Item GetCatalogItem202204(ParameterGetCatalogItem parameterGetCatalogItem);
+   public async Task<AmazonSpApiSDK.Models.CatalogItems.V20220401.Item> GetCatalogItem202204Async(ParameterGetCatalogItem parameterGetCatalogItem, CancellationToken cancellationToken = default);
+   ```
+   - Synchronously and asynchronously retrieves detailed information for an item in the Amazon catalog according to the new API version.
 
-#### Listing Catalog Categories
+6. **SearchCatalogItems202204 / SearchCatalogItems202204Async**
+   ```csharp
+   public IList<AmazonSpApiSDK.Models.CatalogItems.V20220401.Item> SearchCatalogItems202204(ParameterSearchCatalogItems202204 parameterSearchCatalogItems);
+   public async Task<IList<AmazonSpApiSDK.Models.CatalogItems.V20220401.Item>> SearchCatalogItems202204Async(ParameterSearchCatalogItems202204 parameter, CancellationToken cancellationToken = default);
+   ```
+   - Synchronously and asynchronously searches catalog items based on various parameters for the newer API version.
 
-- **ListCatalogCategories(string ASIN, string SellerSKU = null, string MarketPlaceID = null)**
-  - Synchronous method to list catalog categories.
+7. **SearchCatalogItemsByNextToken202204Async**
+   ```csharp
+   private async Task<ItemSearchResults> SearchCatalogItemsByNextToken202204Async(ParameterSearchCatalogItems202204 parameter, CancellationToken cancellationToken = default);
+   ```
+   - Helper method to handle pagination and retrieve further results if a next token is provided during catalog item search.
 
-- **ListCatalogCategoriesAsync(string ASIN, string SellerSKU = null, string MarketPlaceID = null, CancellationToken cancellationToken = default)**
-  - Asynchronous method to list catalog categories.
+### Utilities and Helper Methods
 
-### V2022-04-01 API
+- Several helper methods are used throughout the service to create authorized requests and handle responses, such as:
+  ```csharp
+  await CreateAuthorizedRequestAsync(...);
+  var response = await ExecuteRequestAsync<...>(...);
+  ```
+  - These methods manage API request authorization, execution, and response handling.
 
-#### Methods for Newer API Version
+### Conclusion
 
-- **GetCatalogItem202204(ParameterGetCatalogItem parameterGetCatalogItem)**
-  - Retrieves details for an item using the newer API version.
-
-- **GetCatalogItem202204Async(ParameterGetCatalogItem parameterGetCatalogItem, CancellationToken cancellationToken = default)**
-  - Asynchronous method to retrieve item details using the newer API version.
-
-- **SearchCatalogItems202204(ParameterSearchCatalogItems202204 parameterSearchCatalogItems)**
-  - Searches for catalog items using the newer API version.
-
-- **SearchCatalogItems202204Async(ParameterSearchCatalogItems202204 parameter, CancellationToken cancellationToken = default)**
-  - Asynchronous method to search for catalog items using the newer API version.
-
-#### Private Helper Method
-
-- **SearchCatalogItemsByNextToken202204Async(ParameterSearchCatalogItems202204 parameter, CancellationToken cancellationToken = default)**
-  - Helper method to handle pagination when searching catalog items.
-
-### Notes
-
-- The class includes handling for authorized requests, rate limiting, and pagination.
-- The file also extensively uses async patterns for making non-blocking API calls.
-- Deprecated methods are marked with attributes to suppress usage and guide developers towards newer API methods.
-
+The `CatalogItemService` class offers a range of synchronous and asynchronous methods to interact with Amazon's catalog items, including searching and retrieving item details. The class also handles deprecated methods while providing updated implementations for better API conformity.
 
 ----
 
 ### File: create_graphrag_config.py
-The provided Python code file focuses on configuring various parameters for a GraphRAG system by loading settings primarily from environment variables. Here is a breakdown of the code along with an explanation of each significant part and method:
+### Overview
 
-## Imports and Initial Setup
-```python
-import os
-from enum import Enum
-from pathlib import Path
-from typing import cast
+This code file sets up the parameterization settings for a default configuration loaded from environment variables, specifically for a project named `graphrag`. The configurations are built using a combination of environment variable overrides and default values defined in a module. This configuration setup makes extensive use of Python's typing, enums, dataclasses, and external libraries for parsing environmental variables.
 
-from datashaper import AsyncType
-from environs import Env
-from pydantic import TypeAdapter
+### Detailed Breakdown
 
-import graphrag.config.defaults as defs
+#### Imports
 
-from .enums import CacheType, ...
-from .environment_reader import EnvironmentReader
-from .errors import ApiKeyMissingError, ...
-from .input_models import GraphRagConfigInput, LLMConfigInput
-from .models import ...
-from .read_dotenv import read_dotenv
+- **Built-in Libraries:** 
+  - `os` for operating system functionalities.
+  - `Path` from `pathlib` for file path manipulations.
+  - `Enum` from `enum` for creating enumerations.
+  - Various typing utilities from `typing`.
 
-InputModelValidator = TypeAdapter(GraphRagConfigInput)
-```
-The above section sets up the package imports and initializes necessary utilities like `Env` from `environs` and `TypeAdapter` from `pydantic`.
+- **External Libraries:**
+  - `datashaper`, `environs`, and `pydantic` for data validation and parsing.
+  - Custom imports from within the project for handling defaults, errors, models, and reading environment files.
 
-## Main Function: `create_graphrag_config`
-```python
-def create_graphrag_config(values: GraphRagConfigInput | None = None, root_dir: str | None = None) -> GraphRagConfig:
-    ...
-    # Core configuration logic here
-    ...
-    return GraphRagConfig(
-        root_dir=root_dir,
-        ...
-        global_search=global_search_model,
-    )
-```
-The `create_graphrag_config` function is the focal point, orchestrating the creation of the GraphRAG configuration. It takes an optional dictionary of input values and a root directory, and returns a populated `GraphRagConfig` object.
+#### Constants
 
-### Sub-functions within `create_graphrag_config`:
-1. **_make_env**
-   ```python
-   def _make_env(root_dir: str) -> Env:
-       read_dotenv(root_dir)
-       env = Env(expand_vars=True)
-       env.read_env()
-       return env
-   ```
-   Loads environment variables from a `.env` file.
+- **Enums:**
+  - `Fragment` and `Section` are enums used to represent various configuration settings (e.g., `api_key`, `cache`, `input`, etc.).
 
-2. **_token_replace**
-   ```python
-   def _token_replace(data: dict):
-       for key, value in data.items():
-           if isinstance(value, dict):
-               _token_replace(value)
-           elif isinstance(value, str):
-               data[key] = os.path.expandvars(value)
-   ```
-   Recursively replaces tokens in a dictionary object with corresponding environment variables.
+#### Functions
 
-### Environment Reader and Validators
-The code heavily relies on the `EnvironmentReader` class to fetch and cast environment variables.
+1. **`_is_azure`**:
+   - Checks if the provided LLM type is an Azure-specific type.
 
-### Hydration Functions
-These sub-functions hydrate or populate configuration objects:
-1. **hydrate_async_type**
-2. **hydrate_llm_params**
-3. **hydrate_embeddings_params**
-4. **hydrate_parallelization_params**
+2. **`_make_env`**:
+   - Reads `.env` files and sets up an environment using the `environs` library.
 
-### Configuration Models
-The configuration includes various models that reflect different sections of the system:
-- `CacheConfig`
-- `ChunkingConfig`
-- `ClaimExtractionConfig`
-- `EmbedGraphConfig`
-- `EntityExtractionConfig`
-- `GlobalSearchConfig`
-- `InputConfig`
-- `LLMParameters`
-- `LocalSearchConfig`
-- `ReportingConfig`
-- `SnapshotsConfig`
-- `StorageConfig`
-- `SummarizeDescriptionsConfig`
-- `TextEmbeddingConfig`
-- `UmapConfig`
+3. **`_token_replace`**:
+   - Recursively replaces environment variable tokens in a dictionary.
 
-### Error Handling
-The function references several custom error classes:
-- `ApiKeyMissingError`
-- `AzureApiBaseMissingError`
-- `AzureDeploymentNameMissingError`
+#### Main Function
 
-### Enum Classes
-Defines fragments and sections enums for better structuring and referencing environment variables:
-1. **Fragment**
-   ```python
-   class Fragment(str, Enum):
-       api_base = "API_BASE"
-       ...
-   ```
-2. **Section**
-   ```python
-   class Section(str, Enum):
-       base = "BASE"
-       ...
-   ```
+- **`create_graphrag_config`**:
+  - Takes optional `values` and `root_dir` arguments.
+  - Creates an environment reader and sets up the configuration by reading values from the dictionary and environment variables.
+  - Inside, several helper methods are defined to "hydrate" or fill various config parts (`hydrate_async_type`, `hydrate_llm_params`, `hydrate_embeddings_params`, `hydrate_parallelization_params`).
+  - **Hydration Methods:**
+    - `hydrate_async_type`: Sets up async configuration.
+    - `hydrate_llm_params`: Sets up language model parameters.
+    - `hydrate_embeddings_params`: Sets up embedding model parameters.
+    - `hydrate_parallelization_params`: Sets up parallelization parameters.
+  - Collects fallback values for API keys and other settings from the environment.
+  - Multiple environment prefixes (`Section`) are used to isolate configuration sections.
 
-## Utility Functions
-```python
-def _is_azure(llm_type: LLMType | None) -> bool:
-    return (
-        llm_type == LLMType.AzureOpenAI
-        or llm_type == LLMType.AzureOpenAIChat
-        or llm_type == LLMType.AzureOpenAIEmbedding
-    )
-```
-A helper function to check if a given LLM type is an Azure type.
+- **Configuration Sections:**
+  - **`llm`:** Handles LLM-specific configurations.
+  - **`embeddings`:** Handles embedding-specific configurations.
+  - **`embed_graph`**: Handles graph embedding configurations using parameters like `num_walks`, `walk_length`, etc.
+  - **`input`**: Sets up input configurations with details like `file_type`, `encoding`, etc.
+  - **`cache`**: Sets up caching configurations.
+  - **`reporting`**: Sets up reporting configurations.
+  - **`storage`**: Sets up storage configurations.
+  - **`chunks`**: Configures chunking details for data processing.
+  - **`snapshots`**: Configures how snapshots should be handled.
+  - **`entity_extraction`**: Sets up entity extraction configurations.
+  - **`claim_extraction`**: Configures claim extraction.
+  - **`community_reports`**: Sets up community report configurations.
+  - **`summarize_descriptions`**: Summarizes description configurations.
+  - **`local_search`**: Handles local search configurations in the system.
+  - **`global_search`**: Sets up configurations for global search.
 
-The code defines a comprehensive configuration setup for a system that includes language models, embedding processes, storage, and several other configurations, validating and replacing parameters through environment variables.
+- Finally, a comprehensive `GraphRagConfig` object is returned, encapsulating all the hydrated configurations.
+
+### Usage
+
+- This configuration script ensures that all required settings are loaded conditionally based on the provided values and environment settings.
+- It also performs validation to guarantee that all necessary parameters are present and correctly formatted.
+- Errors are raised for missing critical configurations, allowing the user to be aware of misconfigurations early.
+
+### Conclusion
+
+The code is robust in setting up and validating configurations for an application, ensuring flexibility, and consistency by using environment variables. The extensive use of enums and typing ensures that developers have a clear structure and documentation of what each configuration section entails.
 
 ----
 
 ### File: integration.spec.ts
-### Code Structure and Explanation:
+This code file comprises end-to-end tests for a TodoMVC application using Playwright. Let's break it down:
 
-#### Imports:
-- **import { test, expect } from '@playwright/test';**
-  - Imports core testing functions from Playwright.
-- **import type { Page } from '@playwright/test';**
-  - Imports the `Page` type for type-checking purposes.
+### Configuration and Imports:
+```javascript
+import { test, expect } from '@playwright/test';
+import type { Page } from '@playwright/test';
 
-#### Configuration:
-- **test.describe.configure({ mode: 'parallel' });**
-  - Configures the test suite to run tests in parallel mode.
+test.describe.configure({ mode: 'parallel' });
+```
+- **Imports**: Imports the `test` and `expect` functions from `@playwright/test`. It also imports the `Page` type.
+- **Configuration**: Configures the test suite to run in parallel mode.
 
-#### Data and Setup:
-- **TODO_ITEMS** - Array containing sample todo items.
+### Constants:
+```javascript
+const TODO_ITEMS = [
+  'buy some cheese',
+  'feed the cat',
+  'book a doctors appointment'
+];
+```
+- **TODO_ITEMS**: An array that holds default todo items for testing.
 
-- **test.beforeEach(async ({ page }) => { ... });**
-  - Ensures each test navigates to the starting URL before running.
+### Setup:
+```javascript
+test.beforeEach(async ({ page }) => {
+  await page.goto('https://demo.playwright.dev/todomvc');
+});
+```
+- **beforeEach**: Navigates to the TodoMVC application before each test.
 
-### Test Suites:
+### Functions for Local Storage Checks:
+#### `createDefaultTodos`
+Creates default todo items.
+```javascript
+async function createDefaultTodos(page) { ... }
+```
+#### `checkNumberOfTodosInLocalStorage`
+Validates the number of todos in local storage.
+```javascript
+async function checkNumberOfTodosInLocalStorage(page: Page, expected: number) { ... }
+```
+#### `checkNumberOfCompletedTodosInLocalStorage`
+Validates the number of completed todos in local storage.
+```javascript
+async function checkNumberOfCompletedTodosInLocalStorage(page: Page, expected: number) { ... }
+```
+#### `checkTodosInLocalStorage`
+Checks if a specific todo is stored in local storage.
+```javascript
+async function checkTodosInLocalStorage(page: Page, title: string) { ... }
+```
+
+### Test Descriptions:
 
 #### New Todo:
-Tests functionality related to adding new todos.
-1. **should allow me to add todo items**
-   - Adds todo items and verifies count and content.
-2. **should clear text input field when an item is added**
-   - Ensures text input is cleared after adding a todo item.
-3. **should append new items to the bottom of the list**
-   - Checks if new items are appended properly and verifies item count.
-4. **should show #main and #footer when items added**
-   - Verifies visibility of main and footer sections after adding items.
+```javascript
+test.describe('New Todo', () => {
+  // Test cases for adding new todos
+  test('should allow me to add todo items', async ({ page }) => { ... });
+  test('should clear text input field when an item is added', async ({ page }) => { ... });
+  test('should append new items to the bottom of the list', async ({ page }) => { ... });
+  test('should show #main and #footer when items added', async ({ page }) => { ... });
+});
+```
+- **Tests**:
+  - Adding new todos.
+  - Clearing input field after adding a todo.
+  - Appending new items at the bottom.
+  - Displaying `#main` and `#footer` when items are added.
 
-#### Mark all as completed:
-Tests marking all items as completed and toggling their states.
-1. **test.beforeEach(async ({ page }) => { ... });**
-   - Creates default todos before each test.
-2. **test.afterEach(async ({ page }) => { ... });**
-   - Verifies the number of todos in local storage after each test.
-3. **should allow me to mark all items as completed**
-   - Checks if all items can be marked as completed.
-4. **should allow me to clear the complete state of all items**
-   - Ensures all items can be reverted back to incomplete.
-5. **complete all checkbox should update state when items are completed / cleared**
-   - Tests the toggle all checkbox behavior based on item states.
+#### Mark All as Completed:
+```javascript
+test.describe('Mark all as completed', () => {
+  test.beforeEach(async ({ page }) => { ... });
+  test.afterEach(async ({ page }) => { ... });
+  test('should allow me to mark all items as completed', async ({ page }) => { ... });
+  test('should allow me to clear the complete state of all items', async ({ page }) => { ... });
+  test('complete all checkbox should update state when items are completed / cleared', async ({ page }) => { ... });
+});
+```
+- **Tests**:
+  - Marking all items as complete.
+  - Clearing the completion state of all items.
+  - Updating checkbox state when items' completed state changes.
 
 #### Item:
-Tests individual item interactions, like completing, un-completing, editing tasks.
-1. **should allow me to mark items as complete**
-   - Checks if individual items can be marked complete.
-2. **should allow me to un-mark items as complete**
-   - Allows items to be marked incomplete.
-3. **should allow me to edit an item**
-   - Verifies item text can be edited.
+```javascript
+test.describe('Item', () => {
+  // Test cases for individual todo items
+  test('should allow me to mark items as complete', async ({ page }) => { ... });
+  test('should allow me to un-mark items as complete', async ({ page }) => { ... });
+  test('should allow me to edit an item', async ({ page }) => { ... });
+});
+```
+- **Tests**:
+  - Marking items as complete.
+  - Un-marking items as complete.
+  - Editing items.
 
 #### Editing:
-Tests various editing-related functionalities.
-1. **test.beforeEach(async ({ page }) => { ... });**
-   - Sets up by creating default todos before each test.
-2. **should hide other controls when editing**
-   - Ensures other controls hide during item edit.
-3. **should save edits on blur**
-   - Saves edits when the input loses focus.
-4. **should trim entered text**
-   - Tests if entered text is trimmed of extra spaces.
-5. **should remove the item if an empty text string was entered**
-   - Verifies item deletion on entering an empty string.
-6. **should cancel edits on escape**
-   - Cancels edits on pressing the escape key.
+```javascript
+test.describe('Editing', () => {
+  // Test cases for editing todos
+  test('should hide other controls when editing', async ({ page }) => { ... });
+  test('should save edits on blur', async ({ page }) => { ... });
+  test('should trim entered text', async ({ page }) => { ... });
+  test('should remove the item if an empty text string was entered', async ({ page }) => { ... });
+  test('should cancel edits on escape', async ({ page }) => { ... });
+});
+```
+- **Tests**:
+  - Hiding other controls during editing.
+  - Saving edits on blur.
+  - Trimming entered text.
+  - Removing item when empty text is entered.
+  - Canceling edits on escape.
 
 #### Counter:
-Tests displaying the current number of items.
-1. **should display the current number of todo items**
-   - Verifies the todo count displayed matches the actual number of items.
+```javascript
+test.describe('Counter', () => {
+  test('should display the current number of todo items', async ({ page }) => { ... });
+});
+```
+- **Tests**:
+  - Displaying the current number of todo items.
 
-#### Clear completed button:
-Tests for clearing completed tasks.
-1. **test.beforeEach(async ({ page }) => { ... });**
-   - Sets up by creating default todos before each test.
-2. **should display the correct text**
-   - Verifies the visibility of the 'Clear completed' button.
-3. **should remove completed items when clicked**
-   - Tests if completed items are removed when button is clicked.
-4. **should be hidden when there are no items that are completed**
-   - Ensures 'Clear completed' button hides when no items are completed.
+#### Clear Completed Button:
+```javascript
+test.describe('Clear completed button', () => {
+  // Test cases for the clear completed button
+  test('should display the correct text', async ({ page }) => { ... });
+  test('should remove completed items when clicked', async ({ page }) => { ... });
+  test('should be hidden when there are no items that are completed', async ({ page }) => { ... });
+});
+```
+- **Tests**:
+  - Displaying correct text for the clear completed button.
+  - Removing completed items when clicked.
+  - Hiding the button when there are no completed items.
 
 #### Persistence:
-Tests if the app's state persists across reloads.
-1. **should persist its data**
-   - Verifies the persistence of todo items and their states after a page reload.
+```javascript
+test.describe('Persistence', () => {
+  test('should persist its data', async ({ page }) => { ... });
+});
+```
+- **Tests**:
+  - Persisting data.
 
 #### Routing:
-Tests for filtering tasks based on their status.
-1. **test.beforeEach(async ({ page }) => { ... });**
-   - Creates default todos and ensures they are stored before navigating.
-2. **should allow me to display active items**
-   - Filters to display only active items.
-3. **should respect the back button**
-   - Verifies navigation and state management using the back button.
-4. **should allow me to display completed items**
-   - Filters to display only completed items.
-5. **should allow me to display all items**
-   - Resets filter to display all items.
-6. **should highlight the currently applied filter**
-   - Ensures the correct filter is highlighted.
+```javascript
+test.describe('Routing', () => {
+  // Test cases for routing
+  test('should allow me to display active items', async ({ page }) => { ... });
+  test('should respect the back button', async ({ page }) => { ... });
+  test('should allow me to display completed items', async ({ page }) => { ... });
+  test('should allow me to display all items', async ({ page }) => { ... });
+  test('should highlight the currently applied filter', async ({ page }) => { ... });
+});
+```
+- **Tests**:
+  - Displaying active items.
+  - Respecting the back button.
+  - Displaying completed items.
+  - Displaying all items.
+  - Highlighting the currently applied filter.
 
-### Helper Functions:
-
-1. **createDefaultTodos(page)**
-   - Creates default todo items on the page.
-2. **checkNumberOfTodosInLocalStorage(page, expected)**
-   - Checks the number of todos in local storage matches the expected number.
-3. **checkNumberOfCompletedTodosInLocalStorage(page, expected)**
-   - Validates the number of completed todos in local storage.
-4. **checkTodosInLocalStorage(page, title)**
-   - Ensures todos in local storage contain a specific title.
-
-This code demonstrates comprehensive testing of a TodoMVC application using Playwright, covering functionalities like adding, editing, completing tasks, and state persistence.
+### Conclusion:
+This code file extensively tests various functionalities of a TodoMVC application using Playwright. It ensures the proper behavior of adding, editing, completing, and filtering todo items, as well as verifying data persistence and UI updates.
 
 ----
 
 ### File: Logic.java
-# Code Overview
+### Logic Class Overview
 
-This code defines a `Logic` class which acts as a facade to various core logic classes in the system. It provides a central point of access for business logic operations across different modules such as accounts, courses, feedback sessions, notifications, instructors, students, and usage statistics.
+The `Logic` class serves as a facade providing business logic for various operations within the system. It centralizes method calls to different logic layers and encapsulates complex interactions between them. Below is a breakdown of the code file:
 
-## Breakdown of Methods
+#### Constructor and Singleton Accessor
 
-### Account Logic Methods
+- `Logic()`: Private constructor to prevent initialization from outside the class.
+- `inst()`: Returns the singleton instance of `Logic`.
 
-- `getAccount(String googleId)`: Returns the account associated with `googleId` from the `AccountsLogic`.
-- `getAccountsForEmail(String email)`: Returns accounts with email matching `email`.
-- `deleteAccountCascade(String googleId)`: Deletes account and cascades deletions to associated data.
+#### Account Management Methods
 
-### Notification Logic Methods
+- `getAccount(String googleId)`: Retrieves an account by its Google ID.
+- `getAccountsForEmail(String email)`: Fetches a list of accounts associated with an email.
+- `getReadNotificationsId(String googleId)`: Returns IDs of read notifications for a user.
+- `updateReadNotifications(String googleId, String notificationId, Instant endTime)`: Updates user read status for specific notification IDs.
 
-- `getActiveNotificationsByTargetUser(NotificationTargetUser targetUser)`: Returns active notifications for the specified target user.
-- `createNotification(NotificationAttributes notification)`: Creates a notification.
-- `updateNotification(NotificationAttributes.UpdateOptions updateOptions)`: Updates a notification.
+#### Notification Management Methods
+
+- `getActiveNotificationsByTargetUser(NotificationTargetUser targetUser)`: Returns active notifications for a specific user.
+- `getAllNotifications()`: Retrieves all notifications.
+- `getNotification(String notificationId)`: Fetches a notification by ID.
+- `createNotification(NotificationAttributes notification)`: Creates a new notification.
+- `updateNotification(NotificationAttributes.UpdateOptions updateOptions)`: Updates an existing notification.
 - `deleteNotification(String notificationId)`: Deletes a notification by ID.
 
-### Course Logic Methods
+#### Instructor Management Methods
 
-- `getCourse(String courseId)`: Returns course attributes for the given `courseId`.
-- `createCourseAndInstructor(String instructorGoogleId, CourseAttributes courseAttributes)`: Creates a course and an associated instructor.
-- `deleteCourseCascade(String courseId)`: Deletes a course and cascades deletions to associated data like students, sessions, etc.
+- `verifyAllInstructorsExistInCourse(String courseId, Collection<String> instructorEmailAddresses)`: Ensures all given instructors exist in a course.
+- `createInstructor(InstructorAttributes instructor)`: Creates a new instructor.
+- `searchInstructorsInWholeSystem(String queryString)`: Searches instructors across the system (admin use).
+- `updateInstructorCascade(InstructorAttributes.UpdateOptionsWithGoogleId updateOptions)`: Updates instructor information and cascades changes.
+- `getInstructorsForCourse(String courseId)`: Retrieves instructors for a specific course.
+- `deleteInstructorCascade(String courseId, String email)`: Deletes both instructor privileges and associated data.
 
-### Instructor Logic Methods
+#### Course Management Methods
 
-- `createInstructor(InstructorAttributes instructor)`: Creates an instructor entry.
-- `updateInstructorCascade(InstructorAttributes.UpdateOptionsWithGoogleId updateOptions)`: Updates an instructor and cascades changes.
-- `deleteInstructorCascade(String courseId, String email)`: Deletes an instructor and cascades deletions to associated data.
-- `getInstructorForEmail(String courseId, String email)`: Fetches instructor by email within a course.
+- `createCourseAndInstructor(String instructorGoogleId, CourseAttributes courseAttributes)`: Creates a course and associates an instructor.
+- `getCourse(String courseId)`: Retrieves course attributes by course ID.
+- `getCoursesForInstructor(List<InstructorAttributes> instructorList)`: Returns active courses associated with instructors.
+- `updateCourseCascade(CourseAttributes.UpdateOptions updateOptions)`: Updates a course and cascades changes to related sessions.
+- `deleteCourseCascade(String courseId)`: Deletes a course and associated data.
 
-### Feedback Session Logic Methods
+#### Student Management Methods
+
+- `getStudentForRegistrationKey(String registrationKey)`: Retrieves a student by their registration key.
+- `createStudent(StudentAttributes student)`: Creates a new student.
+- `deleteStudentCascade(String courseId, String studentEmail)`: Deletes a student and associated data.
+- `validateSectionsAndTeams(List<StudentAttributes> studentList, String courseId)`: Validates sections and teams for students.
+- `searchStudentsInWholeSystem(String queryString)`: Searches students across the system (admin use).
+- `updateStudentCascade(StudentAttributes.UpdateOptions updateOptions)`: Updates student information and cascades changes.
+
+#### Feedback Session Management Methods
 
 - `createFeedbackSession(FeedbackSessionAttributes feedbackSession)`: Creates a new feedback session.
+- `getFeedbackSession(String feedbackSessionName, String courseId)`: Retrieves a feedback session by session name and course ID.
+- `updateFeedbackSession(FeedbackSessionAttributes.UpdateOptions updateOptions)`: Updates a feedback session.
+- `deleteFeedbackSessionCascade(String feedbackSessionName, String courseId)`: Deletes a feedback session and associated data.
 - `publishFeedbackSession(String feedbackSessionName, String courseId)`: Publishes a feedback session.
-- `deleteFeedbackSessionCascade(String feedbackSessionName, String courseId)`: Deletes a feedback session and cascades deletions to associated data.
-- `getFeedbackSession(String feedbackSessionName, String courseId)`: Returns feedback session attributes.
+- `unpublishFeedbackSession(String feedbackSessionName, String courseId)`: Unpublishes a feedback session.
 
-### Feedback Question Logic Methods
+#### Feedback Question and Response Management Methods
 
 - `createFeedbackQuestion(FeedbackQuestionAttributes feedbackQuestion)`: Creates a new feedback question.
-- `deleteFeedbackQuestionCascade(String questionId)`: Deletes a feedback question and cascades deletions.
 - `updateFeedbackQuestionCascade(FeedbackQuestionAttributes.UpdateOptions updateOptions)`: Updates a feedback question and cascades changes.
-- `getFeedbackQuestion(String feedbackQuestionId)`: Returns feedback question attributes by its ID.
-
-### Feedback Response Logic Methods
-
-- `createFeedbackResponse(FeedbackResponseAttributes feedbackResponse)`: Creates a feedback response.
+- `getFeedbackQuestion(String feedbackQuestionId)`: Retrieves a feedback question by ID.
+- `deleteFeedbackQuestionCascade(String questionId)`: Deletes a feedback question and associated responses.
+- `createFeedbackResponse(FeedbackResponseAttributes feedbackResponse)`: Creates a new feedback response.
 - `updateFeedbackResponseCascade(FeedbackResponseAttributes.UpdateOptions updateOptions)`: Updates a feedback response and cascades changes.
-- `deleteFeedbackResponseCascade(String responseId)`: Deletes a feedback response and cascades deletions.
+- `deleteFeedbackResponseCascade(String responseId)`: Deletes a feedback response.
 
-### Feedback Response Comment Logic Methods
+#### Deadline Extension Management Methods
 
-- `createFeedbackResponseComment(FeedbackResponseCommentAttributes feedbackResponseComment)`: Creates a comment on a feedback response.
-- `updateFeedbackResponseComment(FeedbackResponseCommentAttributes.UpdateOptions updateOptions)`: Updates a feedback response comment.
-- `deleteFeedbackResponseComment(long commentId)`: Deletes a feedback response comment.
-
-### Student Logic Methods
-
-- `createStudent(StudentAttributes student)`: Creates a new student entry.
-- `updateStudentCascade(StudentAttributes.UpdateOptions updateOptions)`: Updates a student and cascades changes.
-- `deleteStudentCascade(String courseId, String studentEmail)`: Deletes a student and cascades deletions.
-- `getStudentForEmail(String courseId, String email)`: Returns student attributes for the given email within a course.
-
-### Deadline Extension Logic Methods
-
-- `createDeadlineExtension(DeadlineExtensionAttributes deadlineExtension)`: Creates a deadline extension.
-- `updateDeadlineExtension(DeadlineExtensionAttributes.UpdateOptions updateOptions)`: Updates a deadline extension.
+- `createDeadlineExtension(DeadlineExtensionAttributes deadlineExtension)`: Creates a new deadline extension.
+- `updateDeadlineExtension(DeadlineExtensionAttributes.UpdateOptions updateOptions)`: Updates an existing deadline extension.
 - `deleteDeadlineExtension(String courseId, String feedbackSessionName, String userEmail, boolean isInstructor)`: Deletes a deadline extension.
-- `getDeadlineExtensionsPossiblyNeedingClosingEmail()`: Returns a list of deadline extensions possibly needing closing emails.
 
-### Data Bundle Logic Methods
+#### Data Bundle Management Methods
 
-- `persistDataBundle(DataBundle dataBundle)`: Persists the given data bundle.
-- `removeDataBundle(DataBundle dataBundle)`: Removes the given data bundle.
-- `putDocuments(DataBundle dataBundle)`: Puts searchable documents from the data bundle.
+- `persistDataBundle(DataBundle dataBundle)`: Persists a data bundle to the database.
+- `removeDataBundle(DataBundle dataBundle)`: Removes a data bundle from the database.
 
-This structure allows for easy management and access to various functionalities across the system through the `Logic` class, which acts as a single entry point for multiple logic operations.
+#### Usage Statistics Methods
+
+- `getUsageStatisticsForTimeRange(Instant startTime, Instant endTime)`: Retrieves usage statistics for a specified time range.
+- `calculateEntitiesStatisticsForTimeRange(Instant startTime, Instant endTime)`: Calculates statistics for various entities over a time range.
+- `createUsageStatistics(UsageStatisticsAttributes attributes)`: Creates usage statistics entry.
+
+This breakdown covers the main operations provided by the `Logic` class, enabling interaction with various parts of the system such as accounts, notifications, courses, instructors, students, feedback sessions, feedback questions, feedback responses, deadline extensions, data bundles, and usage statistics. Each method is carefully crafted to encapsulate functionality and ensure appropriate preconditions are met, thus providing a clean and maintainable interface.
 
 ----
 
 ### File: queue.yaml
-This code file is a configuration file, specifically a `queue.yaml` file, used to define task queues for Google Cloud Tasks. Below is the breakdown and explanation for each section and configuration parameter within the file:
+This code file is a `queue.yaml` configuration used for defining task queues in a Google Cloud project. Although somewhat deprecated, it remains in use due to its practical benefits for managing task queues. Here is a breakdown of the configuration provided:
 
-### File Header:
-- **Comments**: Briefly mentions that the usage of `queue.yaml` is somewhat deprecated but is still in use because it is more practical for the current needs.
-- **Documentation Link**: Reference to the official Google Cloud Tasks documentation.
+### Queue Definitions
 
-### Queues Definitions:
-The configuration defines multiple queues, each having its own settings such as name, mode, rate, bucket size, and retry parameters.
+- **General Syntax:**
+  ```yaml
+  queue:
+  - name: queue-name
+    mode: push
+    rate: x/s
+    bucket_size: y
+    retry_parameters:
+      task_retry_limit: z
+      min_backoff_seconds: a
+      max_backoff_seconds: b
+      task_age_limit: c
+      max_doublings: d
+  ```
 
-#### Queue Entries:
-- `**name**`: Specifies the unique name of the queue.
-- `**mode**`: Indicates the mode of the queue, which in this context is always `push`.
-- `**rate**`: Defines the rate at which tasks are dispatched from the queue, measured in tasks per second.
-- `**bucket_size**`: Maximum number of tasks that can be processed at once.
+1. **feedback-session-published-email-queue**
+   ```yaml
+   name: feedback-session-published-email-queue
+   mode: push
+   rate: 1/s
+   bucket_size: 1
+   ```
+   - **Rate:** 1 task per second.
+   - **Bucket Size:** 1 task.
+   - **Retry Parameters:** Not specified.
 
-#### Example of Queue Definitions:
-1. **feedback-session-published-email-queue**:
-   - `rate`: 1 task per second
-   - `bucket_size`: 1
-   
-2. **feedback-session-resend-published-email-queue**:
-   - `rate`: 5 tasks per second
-   - `bucket_size`: 5
-   - `retry_parameters`: Task retry is limited to 2 attempts.
+2. **feedback-session-resend-published-email-queue**
+   ```yaml
+   name: feedback-session-resend-published-email-queue
+   mode: push
+   rate: 5/s
+   bucket_size: 5
+   retry_parameters:
+     task_retry_limit: 2
+   ```
+   - **Rate:** 5 tasks per second.
+   - **Bucket Size:** 5 tasks.
+   - **Retry Parameters:** 
+     - **Task Retry Limit:** 2 times.
 
-3. **feedback-session-remind-email-queue**:
-   - Similar to `feedback-session-resend-published-email-queue` with identical parameters.
-   
-#### Detailed Queue Definitions with Retry Parameters:
-1. **instructor-course-join-email-queue**:
-   - `rate`: 5 tasks per second
-   - `bucket_size`: 20
-   - `retry_parameters`:
-     - `task_retry_limit`: 3 attempts
-     - `min_backoff_seconds`: 5 seconds
-     - `max_backoff_seconds`: 40 seconds
-     - `max_doublings`: 2 doublings
+3. **feedback-session-remind-email-queue**
+   ```yaml
+   name: feedback-session-remind-email-queue
+   mode: push
+   rate: 5/s
+   bucket_size: 5
+   retry_parameters:
+     task_retry_limit: 2
+   ```
+   - **Rate:** 5 tasks per second.
+   - **Bucket Size:** 5 tasks.
+   - **Retry Parameters:** 
+     - **Task Retry Limit:** 2 times.
 
-2. **send-email-queue**:
-   - `rate`: 10 tasks per second
-   - `bucket_size`: 20
-   - `retry_parameters`:
-     - `task_retry_limit`: 5 attempts
-     - `task_age_limit`: 1 day
-     - `min_backoff_seconds`: 30 seconds
-     - `max_backoff_seconds`: 300 seconds
-     - `max_doublings`: 0 doublings
-   
-3. **student-course-join-email-queue**:
-   - Similar to `instructor-course-join-email-queue` with identical parameters.
-   
-4. **search-indexing-queue**:
-   - `rate`: 50 tasks per second
-   - `bucket_size`: 10
-   - `retry_parameters`:
-     - `min_backoff_seconds`: 1 second
+4. **feedback-session-remind-particular-users-email-queue**
+   ```yaml
+   name: feedback-session-remind-particular-users-email-queue
+   mode: push
+   rate: 5/s
+   bucket_size: 5
+   retry_parameters:
+     task_retry_limit: 2
+   ```
+   - **Rate:** 5 tasks per second.
+   - **Bucket Size:** 5 tasks.
+   - **Retry Parameters:** 
+     - **Task Retry Limit:** 2 times.
 
-### Summary:
-This configuration file sets up various task queues for specific purposes such as sending emails and indexing searches, with detailed control over their processing rates, capacity, and retry logic, ensuring that tasks are managed efficiently and reliably.
+5. **feedback-session-unpublished-email-queue**
+   ```yaml
+   name: feedback-session-unpublished-email-queue
+   mode: push
+   rate: 1/s
+   bucket_size: 1
+   ```
+   - **Rate:** 1 task per second.
+   - **Bucket Size:** 1 task.
+   - **Retry Parameters:** Not specified.
+
+6. **instructor-course-join-email-queue**
+   ```yaml
+   name: instructor-course-join-email-queue
+   mode: push
+   rate: 5/s
+   bucket_size: 20
+   retry_parameters:
+     task_retry_limit: 3
+     min_backoff_seconds: 5
+     max_backoff_seconds: 40
+     max_doublings: 2
+   ```
+   - **Rate:** 5 tasks per second.
+   - **Bucket Size:** 20 tasks.
+   - **Retry Parameters:**
+     - **Task Retry Limit:** 3 times.
+     - **Min Backoff Seconds:** 5 seconds.
+     - **Max Backoff Seconds:** 40 seconds.
+     - **Max Doublings:** 2 times.
+
+7. **send-email-queue**
+   ```yaml
+   name: send-email-queue
+   mode: push
+   rate: 10/s
+   bucket_size: 20
+   retry_parameters:
+     task_retry_limit: 5
+     task_age_limit: 1d
+     min_backoff_seconds: 30
+     max_backoff_seconds: 300
+     max_doublings: 0
+   ```
+   - **Rate:** 10 tasks per second.
+   - **Bucket Size:** 20 tasks.
+   - **Retry Parameters:**
+     - **Task Retry Limit:** 5 times.
+     - **Task Age Limit:** 1 day.
+     - **Min Backoff Seconds:** 30 seconds.
+     - **Max Backoff Seconds:** 300 seconds.
+     - **Max Doublings:** 0 times.
+
+8. **student-course-join-email-queue**
+   ```yaml
+   name: student-course-join-email-queue
+   mode: push
+   rate: 5/s
+   bucket_size: 20
+   retry_parameters:
+     task_retry_limit: 3
+     min_backoff_seconds: 5
+     max_backoff_seconds: 40
+     max_doublings: 2
+   ```
+   - **Rate:** 5 tasks per second.
+   - **Bucket Size:** 20 tasks.
+   - **Retry Parameters:**
+     - **Task Retry Limit:** 3 times.
+     - **Min Backoff Seconds:** 5 seconds.
+     - **Max Backoff Seconds:** 40 seconds.
+     - **Max Doublings:** 2 times.
+
+9. **search-indexing-queue**
+   ```yaml
+   name: search-indexing-queue
+   mode: push
+   rate: 50/s
+   bucket_size: 10
+   retry_parameters:
+     min_backoff_seconds: 1
+   ```
+   - **Rate:** 50 tasks per second.
+   - **Bucket Size:** 10 tasks.
+   - **Retry Parameters:**
+     - **Min Backoff Seconds:** 1 second.
+
+This configuration defines several task queues with specific processing rates, bucket sizes, and retry parameters to manage the performance and reliability of task execution in a Google Cloud environment.
 
 ----
 
 ### File: RandomFiles\randomQueue.yaml
-This `queue.yaml` file is used for configuring task queues in Google Cloud Tasks. Although deprecated, the file provides a practical way for managing task queues. Here's a breakdown and explanation of the configuration:
+This code configures task queues using `queue.yaml`, a format used by Google Cloud tasks. The details for each queue include the name, mode, rate, bucket size, and retry parameters.
 
-### General Structure:
-- The file defines a list of queues under the `queue` key.
-- Each queue has specific configurations such as `name`, `mode`, `rate`, `bucket_size`, and optionally `retry_parameters`.
+Here's a breakdown of each configuration parameter and its purpose:
 
-### Queues Configuration:
+### General Parameters
+- **name**: Unique identifier for the queue.
+- **mode**: Queue type; `push` indicates tasks will be automatically sent to a handler for processing.
+- **rate**: Defines the rate at which tasks are executed (e.g., `1/s` means one task per second).
+- **bucket_size**: Number of tasks that the queue can process at once.
 
+### Specific Queue Configurations
 1. **feedback-session-published-email-queue**
-    - **mode:** push
-    - **rate:** 1 task per second
-    - **bucket_size:** 1
+   ```yaml
+   name: feedback-session-published-email-queue
+   mode: push
+   rate: 1/s
+   bucket_size: 1
+   ```
 
 2. **feedback-session-resend-published-email-queue**
-    - **mode:** push
-    - **rate:** 5 tasks per second
-    - **bucket_size:** 5
-    - **retry_parameters:** 
-        - **task_retry_limit:** 2
+   ```yaml
+   name: feedback-session-resend-published-email-queue
+   mode: push
+   rate: 5/s
+   bucket_size: 5
+   retry_parameters:
+     task_retry_limit: 2
+   ```
 
 3. **feedback-session-remind-email-queue**
-    - **mode:** push
-    - **rate:** 5 tasks per second
-    - **bucket_size:** 5
-    - **retry_parameters:**
-        - **task_retry_limit:** 2
+   ```yaml
+   name: feedback-session-remind-email-queue
+   mode: push
+   rate: 5/s
+   bucket_size: 5
+   retry_parameters:
+     task_retry_limit: 2
+   ```
 
 4. **feedback-session-remind-particular-users-email-queue**
-    - **mode:** push
-    - **rate:** 5 tasks per second
-    - **bucket_size:** 5
-    - **retry_parameters:**
-        - **task_retry_limit:** 2
+   ```yaml
+   name: feedback-session-remind-particular-users-email-queue
+   mode: push
+   rate: 5/s
+   bucket_size: 5
+   retry_parameters:
+     task_retry_limit: 2
+   ```
 
 5. **feedback-session-unpublished-email-queue**
-    - **mode:** push
-    - **rate:** 1 task per second
-    - **bucket_size:** 1
+   ```yaml
+   name: feedback-session-unpublished-email-queue
+   mode: push
+   rate: 1/s
+   bucket_size: 1
+   ```
 
 6. **instructor-course-join-email-queue**
-    - **mode:** push
-    - **rate:** 5 tasks per second
-    - **bucket_size:** 20
-    - **retry_parameters:**
-        - **task_retry_limit:** 3
-        - **min_backoff_seconds:** 5
-        - **max_backoff_seconds:** 40
-        - **max_doublings:** 2
+   ```yaml
+   name: instructor-course-join-email-queue
+   mode: push
+   rate: 5/s
+   bucket_size: 20
+   retry_parameters:
+     task_retry_limit: 3
+     min_backoff_seconds: 5
+     max_backoff_seconds: 40
+     max_doublings: 2
+   ```
 
 7. **send-email-queue**
-    - **mode:** push
-    - **rate:** 10 tasks per second
-    - **bucket_size:** 20
-    - **retry_parameters:**
-        - **task_retry_limit:** 5
-        - **task_age_limit:** 1 day
-        - **min_backoff_seconds:** 30
-        - **max_backoff_seconds:** 300
-        - **max_doublings:** 0
+   ```yaml
+   name: send-email-queue
+   mode: push
+   rate: 10/s
+   bucket_size: 20
+   retry_parameters:
+     task_retry_limit: 5
+     task_age_limit: 1d
+     min_backoff_seconds: 30
+     max_backoff_seconds: 300
+     max_doublings: 0
+   ```
 
 8. **student-course-join-email-queue**
-    - **mode:** push
-    - **rate:** 5 tasks per second
-    - **bucket_size:** 20
-    - **retry_parameters:**
-        - **task_retry_limit:** 3
-        - **min_backoff_seconds:** 5
-        - **max_backoff_seconds:** 40
-        - **max_doublings:** 2
+   ```yaml
+   name: student-course-join-email-queue
+   mode: push
+   rate: 5/s
+   bucket_size: 20
+   retry_parameters:
+     task_retry_limit: 3
+     min_backoff_seconds: 5
+     max_backoff_seconds: 40
+     max_doublings: 2
+   ```
 
 9. **search-indexing-queue**
-    - **mode:** push
-    - **rate:** 50 tasks per second
-    - **bucket_size:** 10
-    - **retry_parameters:**
-        - **min_backoff_seconds:** 1
+   ```yaml
+   name: search-indexing-queue
+   mode: push
+   rate: 50/s
+   bucket_size: 10
+   retry_parameters:
+     min_backoff_seconds: 1
+   ```
 
-### Explanation of Key Configurations:
-- **mode:** Specifies the type of queue. `push` mode delivers tasks to a handler for processing.
-- **rate:** The maximum rate at which tasks are dispatched (e.g., `1/s` means one task per second).
-- **bucket_size:** The leaky bucket size controlling burst behavior.
-- **retry_parameters:** Optional settings for retry behavior, including:
-    - **task_retry_limit:** Maximum number of retry attempts for a task.
-    - **min_backoff_seconds:** Minimum time delay before a retry.
-    - **max_backoff_seconds:** Maximum time delay before a retry.
-    - **max_doublings:** Maximum number of times the retry interval doubles.
-    - **task_age_limit:** Maximum age of a task in the queue (e.g., `1d` means one day).
+### Retry Parameters (Optional)
+- **task_retry_limit**: Maximum number of attempts to retry a failed task.
+- **min_backoff_seconds**: Minimum delay before retrying a task.
+- **max_backoff_seconds**: Maximum delay before retrying a task.
+- **max_doublings**: Maximum number of times the retry interval is doubled.
+- **task_age_limit**: The maximum allowable age of a task.
 
-This configuration provides an organized and parameterized way to manage email and indexing tasks, ensuring efficient processing and appropriate retry handling.
+Each queue is tailored with specific constraints to manage different types of tasks efficiently in a Google Cloud environment.
 
 ----
 
 ### File: test-api.spec.ts
-Here is a breakdown of the code file provided:
+This script uses the Playwright framework to automate interactions with the GitHub API. The script outlines a sequence of operations: creating a repository, running tests to create issues on that repository, and finally deleting the repository. Below is a breakdown of the code with descriptions of each section:
 
----
-
-### Summary
-
-The code file is a Playwright test script that interacts with the GitHub API. It performs the following steps:
-1. Creates a new GitHub repository.
-2. Runs tests to programmatically create new issues (bug report and feature request) in the repository.
-3. Deletes the repository after tests are completed.
-
----
-
-### Import Statements
-
+### Importing Modules
 ```javascript
 import { test, expect } from '@playwright/test';
 ```
-- Imports `test` and `expect` functions from the Playwright testing library.
+- **Purpose**: Import the `test` and `expect` functions from Playwright.
 
----
-
-### Constants
-
+### Environment Variables
 ```javascript
 const user = process.env.GITHUB_USER;
 const repo = 'Test-Repo-1';
 ```
-- **`user`**: Fetches the GitHub username from environment variables.
-- **`repo`**: Defines the name of the repository to be created and tested against.
+- **Purpose**: Retrieve the GitHub user and define the repository name.
 
----
-
-### Test Configurations
-
+### Test Configuration
 ```javascript
 test.use({
   baseURL: 'https://api.github.com',
@@ -605,47 +733,38 @@ test.use({
   }
 });
 ```
-- **`baseURL`**: Sets the base URL to GitHub API.
-- **`extraHTTPHeaders`**: Adds headers to all requests:
-  - `Accept`: Uses GitHub API v3.
-  - `Authorization`: Sets the authorization token from environment variables.
+- **Purpose**: Configure the base URL and additional HTTP headers including the authorization token for GitHub API requests.
 
----
-
-### Hook: `beforeAll`
-
+### Before All Tests
 ```javascript
 test.beforeAll(async ({ request }) => {
   const response = await request.post('/user/repos', {
-    data: { name: repo }
+    data: {
+      name: repo
+    }
   });
   expect(response.ok()).toBeTruthy();
 });
 ```
-- **Purpose**: Creates a new repository before running any tests.
-- **Assertions**: Ensures the repository creation request was successful.
+- **Purpose**: Create a new repository before running any tests. The repository name is specified by the `repo` constant. Ensures the response is successful.
 
----
-
-### Hook: `afterAll`
-
+### After All Tests
 ```javascript
 test.afterAll(async ({ request }) => {
   const response = await request.delete(`/repos/${user}/${repo}`);
   expect(response.ok()).toBeTruthy();
 });
 ```
-- **Purpose**: Deletes the repository after all tests have been executed.
-- **Assertions**: Ensures the repository deletion request was successful.
+- **Purpose**: Delete the repository after all tests have run. Ensures the repository is cleaned up regardless of test outcomes.
 
----
-
-### Test: `should create bug report`
-
+### Test: Create Bug Report
 ```javascript
 test('should create bug report', async ({ request }) => {
   const newIssue = await request.post(`/repos/${user}/${repo}/issues`, {
-    data: { title: '[Bug] report 1', body: 'Bug description' }
+    data: {
+      title: '[Bug] report 1',
+      body: 'Bug description',
+    }
   });
   expect(newIssue.ok()).toBeTruthy();
 
@@ -657,19 +776,16 @@ test('should create bug report', async ({ request }) => {
   }));
 });
 ```
-- **Purpose**: Tests the creation of a new bug report issue in the repository.
-- **Assertions**:
-  - Ensures the bug report creation request was successful.
-  - Validates that the created issue exists with the expected title and body in the list of issues.
+- **Purpose**: Test the creation of a bug report. Verifies by creating an issue with title `[Bug] report 1` and description `Bug description`, then checks if the issue exists in the repository.
 
----
-
-### Test: `should create feature request`
-
+### Test: Create Feature Request
 ```javascript
 test('should create feature request', async ({ request }) => {
   const newIssue = await request.post(`/repos/${user}/${repo}/issues`, {
-    data: { title: '[Feature] request 1', body: 'Feature description' }
+    data: {
+      title: '[Feature] request 1',
+      body: 'Feature description',
+    }
   });
   expect(newIssue.ok()).toBeTruthy();
 
@@ -681,156 +797,127 @@ test('should create feature request', async ({ request }) => {
   }));
 });
 ```
-- **Purpose**: Tests the creation of a new feature request issue in the repository.
-- **Assertions**:
-  - Ensures the feature request creation was successful.
-  - Validates that the created feature request exists with the expected title and body in the list of issues.
+- **Purpose**: Test the creation of a feature request. Verifies by creating an issue with title `[Feature] request 1` and description `Feature description`, then confirms if the issue exists in the repository.
 
----
+### Summary
+1. **Setup**: Define user and repository, configure API settings including authentication.
+2. **Lifecycle Management**: Create a repository before tests and delete it after tests.
+3. **Issues Creation Tests**: Validate the creation of bug reports and feature requests by posting issues and confirming their presence in the repository.
 
-### Conclusion
-
-This script leverages the Playwright testing framework and GitHub API to programmatically manage GitHub repository issues. The tests ensure the desired functionality of creating and verifying both bug reports and feature requests. The repository is cleaned up afterward, maintaining a clean state.
+This structured approach ensures automation of repository issue management using Playwright with GitHub's API.
 
 ----
 
 ### File: todo-list.component.html
-This snippet appears to be part of a front-end component template, likely written in a framework like Angular. Below is a detailed breakdown and explanation of each section of the code:
+The provided code appears to be a template written in a framework that supports conditional rendering, data binding, and event handling (likely Angular or a similar framework). Here's a breakdown of the code components and their purposes:
 
-### Overview
-The code defines the structure for displaying and managing a list of "to-do" items if there are any present in the `todos` array. It includes functionality for toggling the completion status of all items as well as individual item management.
+### Conditional Rendering
+```javascript
+@if (todos.length > 0) {
+  <!-- Main content goes here -->
+}
+```
+- **Purpose**: The code within this block is rendered only if the `todos` array has one or more items (`todos.length > 0`).
 
-### Code Breakdown
+### Main Section
+```html
+<main class="main">
+  <!-- Additional content -->
+</main>
+```
+- **Purpose**: This is a `main` HTML element with a class `main` wrapping the primary content.
 
-1. **Conditional Rendering:** 
-    ```javascript
-    @if (todos.length > 0) {
-    ```
-    - This condition checks if the `todos` array has any elements. If there are todos, it proceeds to render the main content.
+### Toggle All Container
+```html
+<div class="toggle-all-container">
+  <input class="toggle-all" type="checkbox" (change)="toggleAll($event)" [checked]="!activeTodos.length" />
+  <label class="toggle-all-label" htmlFor="toggle-all">Toggle All Input</label>
+</div>
+```
+- **Purpose**: This `div` contains:
+  - An `input` checkbox with the class `toggle-all`:
+    - Handles change events using the `toggleAll($event)` method.
+    - Its `checked` state is bound to the inverse of `activeTodos.length`, indicating it's checked when there are no active todos.
+  - A `label` for the checkbox, with `htmlFor` attribute to associate it with `toggle-all`.
 
-2. **Main Container:**
-    ```html
-    <main class="main">
-    ```
-    - This defines a `main` HTML section with a class of `main`, acting as the primary container for the content.
-
-3. **Toggle All Container:**
-    ```html
-    <div class="toggle-all-container">
-      <input class="toggle-all" type="checkbox" (change)="toggleAll($event)" [checked]="!activeTodos.length" />
-      <label class="toggle-all-label" htmlFor="toggle-all">Toggle All Input</label>
-    </div>
-    ```
-    - **`<div class="toggle-all-container">`**: A wrapper `div` that contains the elements related to toggling all todos.
-    
-    - **`<input class="toggle-all" type="checkbox" ... />`:**
-        - **Attributes:**
-            - **`class="toggle-all"`**: Assigns a CSS class for styling.
-            - **`type="checkbox"`**: Defines the input as a checkbox.
-            - **`(change)="toggleAll($event)"`**: This binds the `change` event to a method named `toggleAll`, passing the event object.
-            - **`[checked]="!activeTodos.length"`**: This binds the `checked` state of the checkbox to the condition where there are no active todos (`activeTodos.length` is zero).
-    
-    - **`<label class="toggle-all-label" htmlFor="toggle-all">Toggle All Input</label>`**:
-        - This label is associated with the checkbox for toggling all todos. The `htmlFor` attribute links the label to the checkbox with id `toggle-all`.
-
-4. **Todo List Container:**
-    ```html
-    <ul class="todo-list">
-    ```
-    - A `ul` (unordered list) element with class `todo-list` that will contain individual todo items.
-
-5. **Iterating Over Todos:**
-    ```html
-    @for (todo of todos; track todo) {
-    ```
-    - A loop to iterate over each `todo` object in the `todos` array, typically using a framework-specific directive.
-
-6. **Todo Item Component:**
-    ```html
+### Todo List
+```html
+<ul class="todo-list">
+  @for (todo of todos; track todo) {
     <app-todo-item [todo]="todo" (remove)="removeTodo($event)" />
-    ```
-    - This renders a custom component named `<app-todo-item>`.
-    - **Attributes:**
-        - **`[todo]="todo"`**: Binds the `todo` input of the component to the current `todo` object in the loop.
-        - **`(remove)="removeTodo($event)"`**: Binds the `remove` event of the component to a method named `removeTodo`, passing the event object (`$event`).
+  }
+</ul>
+```
+- **Purpose**: This unordered list (`ul`) element contains:
+  - A loop over `todos` array to dynamically render each todo item using `app-todo-item` component.
+  - Each `app-todo-item` has:
+    - An input binding `[todo]="todo"` to pass the todo data to the component.
+    - An event binding `(remove)="removeTodo($event)"` to handle the removal of a todo item by calling the `removeTodo($event)` method.
 
 ### Summary
-- Checks if there are todos to display.
-- Renders a container with a toggle-all checkbox to manage the completion state of all todos.
-- Iterates over the `todos` array, rendering an `app-todo-item` component for each item, with functionality for removing individual items.
+- **Conditional Rendering**: Ensures the main section is only rendered if there are todos in the list.
+- **`main` Element**: Wraps the entire main section of todo items.
+- **Toggle All Container**: Includes a checkbox to toggle the completion state of all todos and a corresponding label.
+- **Todo List**: Dynamically renders a list of todo items and binds methods for item removal.
+
+This code demonstrates how to effectively use bindings and events to interact with and manipulate a list of items in a structured and dynamic way.
 
 ----
 
 ### File: todo-list.component.ts
-### Summary of `TodoListComponent` Code
+This code defines an Angular component for a to-do list. Below is a breakdown and explanation of each part and method:
 
-This TypeScript file defines an Angular component `TodoListComponent` responsible for managing and displaying a list of to-do items. The component utilizes dependency injection to access the URL path and the to-do service, and it has several methods to fetch and manipulate to-do items.
+## Imports
+- `Component` and `inject` from `@angular/core`: Used to create and manage the component.
+- `Location` from `@angular/common`: Manages navigation and browser URL information.
+- `Todo` and `TodosService` from `../todos.service`: Data model and service to manage to-do items.
+- `TodoItemComponent` from `../todo-item/todo-item.component`: Component for individual to-do items.
 
-### Breakdown of the Code
+## `@Component` Decorator
+Configures metadata for the `TodoListComponent`.
+- `selector`: Specifies the HTML tag for the component (`app-todo-list`).
+- `standalone`: Indicates that this is a standalone component.
+- `imports`: Defines which components the `TodoListComponent` depends on.
+- `templateUrl`: Points to the HTML template file for this component (`./todo-list.component.html`).
 
-#### Imports
-- **Component, inject**: Angular core functionalities for creating and injecting dependencies into the component.
-- **Location**: Service from `@angular/common` used to get the current browser URL path.
-- **Todo, TodosService**: From a `todos.service` file which provides to-do item type and service methods.
-- **TodoItemComponent**: A reusable component that likely represents individual to-do items.
+## `TodoListComponent` Class
+Defines the component's behavior and data handling.
 
-#### Component Metadata
-```typescript
-@Component({
-    selector: 'app-todo-list',
-    standalone: true,
-    imports: [TodoItemComponent],
-    templateUrl: './todo-list.component.html',
-})
-```
-The component is standalone, imports `TodoItemComponent`, and uses an external template defined in `todo-list.component.html`.
+### Properties:
+- `location`: Injected instance of `Location` to manage browser history and URL.
+- `todosService`: Injected instance of `TodosService` for managing to-do items.
 
-#### Class: `TodoListComponent`
-Defines the main class of the component:
-
-1. **Property Injection**:
-    - `location`: Injected to access the browser's current URL.
-    - `todosService`: Injected to interact with the to-do items.
-
-#### Methods
-
-1. **`todos`: Getter Method**
-    ```typescript
-    get todos(): Todo[] {
+### Getters:
+- `todos`: Returns filtered to-do items based on the current URL path (default is 'all').
+  ```typescript
+  get todos(): Todo[] {
       const filter = this.location.path().split('/')[1] || 'all';
       return this.todosService.getItems(filter);
-    }
-    ```
-    - Fetches to-do items based on a filter derived from the current URL path.
-    - If no specific filter is found in the path, defaults to 'all'.
-
-2. **`activeTodos`: Getter Method**
-    ```typescript
-    get activeTodos(): Todo[] {
+  }
+  ```
+- `activeTodos`: Returns only active to-do items.
+  ```typescript
+  get activeTodos(): Todo[] {
       return this.todosService.getItems('active');
-    }
-    ```
-    - Fetches all active to-do items specifically.
+  }
+  ```
 
-3. **`removeTodo`: Method**
-    ```typescript
-    removeTodo (todo: Todo): void {
+### Methods:
+- `removeTodo`: Removes a given to-do item.
+  ```typescript
+  removeTodo(todo: Todo): void {
       this.todosService.removeItem(todo);
-    }
-    ```
-    - Removes a specified to-do item using the service method `removeItem`.
-
-4. **`toggleAll`: Method**
-    ```typescript
-    toggleAll (e: Event) {
+  }
+  ```
+- `toggleAll`: Toggles the completion status of all to-do items based on an event (e.g., a checkbox toggle).
+  ```typescript
+  toggleAll(e: Event) {
       const input = e.target as HTMLInputElement;
       this.todosService.toggleAll(input.checked);
-    }
-    ```
-    - Toggles the completion state of all to-do items based on a checkbox input event.
+  }
+  ```
 
-### Summary
-The `TodoListComponent` serves as the controller for a to-do list, managing the state and behavior of to-do items using the provided `TodosService` and URL path to filter the list accordingly. The component supports operations like fetching all or active to-dos, removing a specific to-do, and toggling the completion state of all to-dos.
+By structuring the component in this way, it efficiently manages the state and behavior of a to-do list in an Angular application.
 
 ----
 

@@ -4,13 +4,12 @@ import { ISecretProvider } from './providers/ISecretProvider';
 import { FileSection } from './models/FileSection';
 import { Constants } from './constants';
 import { Providers } from './providers';
-import { Enums } from './enums';
 import { SectionConfig } from './models/SectionConfig';
 
 export class DocuGen {
   private ISecretProvider: ISecretProvider;
 
-  constructor(ISecretProvider: ISecretProvider, configSectionName: Enums, workspacePath: string) {
+  constructor(ISecretProvider: ISecretProvider, workspacePath: string) {
     if (!ISecretProvider) {
       throw new Error('Secret provider is required');
     }
