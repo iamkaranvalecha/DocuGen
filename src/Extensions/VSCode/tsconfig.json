@@ -1,0 +1,20 @@
+{
+	"compilerOptions": {
+	  "module": "commonjs",
+	  "target": "es6",
+	  "outDir": "./dist",
+	  "rootDir": "./src",
+	  "sourceMap": true,
+	  "strictPropertyInitialization": false,
+	  "declaration": false,
+	  "resolveJsonModule": true,
+	  "skipLibCheck": true,
+	  "experimentalDecorators": true,
+	  "esModuleInterop": true
+	},
+	"include": ["src/**/*"],
+	"references": [
+		{ "path": "../../Core" }
+	],
+	"exclude": ["./node_modules/@types","node_modules", ".vscode-test", "_code-dep", "dist"],
+}
