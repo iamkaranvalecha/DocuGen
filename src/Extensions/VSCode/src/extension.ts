@@ -2,11 +2,9 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 import * as fs from 'fs';
-import { DocuGen, Constants as DocuGenConstants, Enums, ConfigProvider, DocuGenConfig, SectionConfig } from 'docugen';
+import { DocuGen, Constants as DocuGenConstants, Enums, ConfigProvider, DocuGenConfig, SectionConfig,SettingEnums } from 'docugen';
 import path from 'path';
 import { VSCodeSecretProvider } from './providers/VSCodeSecretProvider';
-import { SettingEnums } from 'docugen/enums';
-
 const defaultExtension: string = '.md';
 
 // This method is called when your extension is activated
