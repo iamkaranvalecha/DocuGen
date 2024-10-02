@@ -9,12 +9,9 @@ import { SectionConfig } from './models/SectionConfig';
 export class DocuGen {
   private ISecretProvider: ISecretProvider;
 
-  constructor(ISecretProvider: ISecretProvider, workspacePath: string) {
+  constructor(ISecretProvider: ISecretProvider) {
     if (!ISecretProvider) {
       throw new Error('Secret provider is required');
-    }
-    if (!workspacePath) {
-      throw new Error('Workspace path is empty')
     }
 
     this.ISecretProvider = ISecretProvider
