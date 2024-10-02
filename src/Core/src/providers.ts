@@ -1,4 +1,3 @@
-import { SectionConfig } from './models/SectionConfig';
 import { ISecretProvider } from './providers/ISecretProvider';
 import axios from "axios";
 
@@ -9,12 +8,12 @@ export class Providers {
     this.secretProvider = secretProvider;
   }
 
-  async sendRequestToModel(prompt: string, content: string, config: SectionConfig) {
-    if (config.values.useOllama) {
-      return this.useOllama(prompt, content, config);
+  async sendRequestToModel(prompt: string, content: string, useOllama: boolean, modelEndpoint: string, modelName: string, modelVersion: string) {
+    if (useOllama) {
+      return this.useOllama(prompt, content, modelEndpoint, modelName, modelVersion);
     }
     else {
-      return this.useAzureOpenAI(prompt, content, config);
+      return this.useAzureOpenAI(prompt, content, modelEndpoint, modelName, modelVersion);
     }
   }
 
@@ -26,11 +25,11 @@ export class Providers {
    * @param {string} fileName
    * @return {*} 
    */
-  private async useOllama(prompt: string, content: string, config: SectionConfig) {
+  private async useOllama(prompt: string, content: string, modelEndpoint: string, modelName: string, modelVersion: string) {
     let settings: any = {
-      "endpoint": config.values.modelEndpoint,
-      "apikey": await this.secretProvider.getSecret('model-local-api-endpoint-key'),
-      "modelName": config.values.modelName,
+      "endpoint": modelEndpoint,
+      "apikey": await this.secretProvider.getSecret('modelApiKey'),
+      "modelName": modelName,
     };
     var options = {
       method: 'POST',
@@ -55,12 +54,12 @@ export class Providers {
     }
   }
 
-  private async useAzureOpenAI(prompt: string, content: string, config: SectionConfig) {
+  private async useAzureOpenAI(prompt: string, content: string, modelEndpoint: string, modelName: string, modelVersion: string) {
     let settings = {
-      "endpoint": config.values.modelEndpoint,
-      "apiversion": config.values.modelVersion,
-      "model": config.values.modelName,
-      "apikey": await this.secretProvider.getSecret('model-azure-openai-model-api-endpoint-key'),
+      "endpoint": modelEndpoint,
+      "apiversion": modelVersion,
+      "model": modelName,
+      "apikey": await this.secretProvider.getSecret('modelApiKey'),
     };
     var options = {
       method: 'POST',
