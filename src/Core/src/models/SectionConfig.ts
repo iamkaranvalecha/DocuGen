@@ -2,18 +2,14 @@ import { Constants } from "../constants";
 import { Enums } from "../enums";
 
 export class SectionConfig {
-    constructor(name: Enums) {
+    constructor(name: Enums, defaultFileName: string, excludedItems: string, includedItems: string, uncheckedItems: string, supportedExtensions: string) {
         this.name = name;
         this.values = {
-            defaultDocumentFileName: Constants.extensionName,
-            includedItems: "",
-            excludedItems: "",
-            uncheckedItems: "",
-            supportedExtensions: "",
-            useOllama: false,
-            modelEndpoint: '',
-            modelName: '',
-            modelVersion: ''
+            defaultDocumentFileName: defaultFileName ?? Constants.extensionName,
+            includedItems: includedItems ?? "",
+            excludedItems: excludedItems ?? Constants.excludedItems,
+            uncheckedItems: uncheckedItems ?? "",
+            supportedExtensions: supportedExtensions ?? Constants.supportedExtensions
         };
     }
 
@@ -24,9 +20,5 @@ export class SectionConfig {
         excludedItems: string;
         uncheckedItems: string,
         supportedExtensions: string;
-        useOllama: boolean;
-        modelEndpoint: string;
-        modelName: string;
-        modelVersion: string;
     };
 }

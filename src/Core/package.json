@@ -9,6 +9,7 @@
   },
   "scripts": {
     "build": "webpack --mode production",
+    "build-tsc": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",

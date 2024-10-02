@@ -2,155 +2,257 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 import * as fs from 'fs';
-import { DocuGen, Constants as DocuGenConstants, Enums, ConfigProvider, DocuGenConfig, SectionConfig,SettingEnums } from 'docugen';
+import { DocuGen, Constants as DocuGenConstants, Enums, SectionConfig, SettingEnums } from 'docugen';
 import path from 'path';
 import { VSCodeSecretProvider } from './providers/VSCodeSecretProvider';
 const defaultExtension: string = '.md';
+const extensionName = DocuGenConstants.extensionName.toLowerCase();
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
-	const scan = vscode.commands.registerCommand(DocuGenConstants.extensionName.toLowerCase() + '.scanRepository', async () => {
+	const scan = vscode.commands.registerCommand(extensionName + '.scanRepository', async () => {
 		const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
 		if (workspaceFolder) {
 			const workspaceFsPath = workspaceFolder?.uri.fsPath;
 			if (workspaceFsPath !== undefined) {
+				const workspaceSettings = vscode.workspace.getConfiguration(extensionName);
+				const modelEndpoint = workspaceSettings.get('modelEndpoint') as string ?? undefined;
+				const modelName = workspaceSettings.get('modelName') as string ?? undefined;
+				const modelVersion = workspaceSettings.get('modelApiVersion') as string ?? undefined;
+				const secretProvider = getSecretProvider();
+				const modelApiKey = await secretProvider.getSecret('modelApiKey') ?? undefined;
+				const useOllama = workspaceSettings.get('useOllama') as boolean;
+				if (validModelConfig(modelEndpoint, modelName, modelVersion, modelApiKey)) {
+					const workspacePathPrefix = workspaceFsPath + "\\";
+					const configFilePath = workspacePathPrefix + DocuGenConstants.configFileName;
+					let sectionConfig = new SectionConfig(
+						Enums.VSCode,
+						extensionName,
+						DocuGenConstants.excludedItems,
+						'',
+						'',
+						DocuGenConstants.supportedExtensions);
 
-				const workspacePathPrefix = workspaceFsPath + "\\";
-				const defaultDocumentFileNameSettingName = SettingEnums.DefaultDocumentFileName;
-				const docuGenConfig = new ConfigProvider(workspacePathPrefix, new SectionConfig(Enums.VSCode)).getConfig();
-				const sectionConfig = docuGenConfig.sections.filter(x => x.name === Enums.VSCode)[0];
-				const defaultDocumentFileNameConfig = docuGenConfig.get(Enums.VSCode, defaultDocumentFileNameSettingName, DocuGenConstants.extensionName);
-				const defaultDocumentFileName: string = defaultDocumentFileNameConfig;
-				const defaultDocumentFileNamePath = defaultDocumentFileName + defaultExtension;
-
-				let uncheckedItems = getUncheckedItems(docuGenConfig);
-				let excludedItems: string[] = getExcludedItems(docuGenConfig);
-				let supportedExtensions: string[] = getSupportedExtensions(docuGenConfig);
-				const allFiles = getItemsRecursively(docuGenConfig, excludedItems, workspaceFsPath);
-
-				if (allFiles.includes('.gitignore')) {
-					getGitIgnoreItems(workspaceFsPath, excludedItems);
-				}
-
-				// Show user a quick pick with only folder list to exclude
-				var quickPick = await vscode.window.createQuickPick();
-				quickPick.title = 'Select files and folders';
-				quickPick.placeholder = 'Select files to generate documentation for..';
-				quickPick.ignoreFocusOut = true;
-				quickPick.step = 1;
-				quickPick.totalSteps = 1;
-
-				// Get all directories and files recursively 
-				const items = excludeInvalidFiles(allFiles);
-				quickPick.items = items.map(item => {
-					const fullPath = path.join(workspaceFsPath, item);
-					const isDirectory = fs.statSync(fullPath).isDirectory();
-					const ext = path.extname(item).toLowerCase();
-					return {
-						label: item,
-						description: fullPath,
-						iconPath: isDirectory
-							? new vscode.ThemeIcon('folder')
-							: new vscode.ThemeIcon(getFileIcon(ext))
-
-					};
-				});
-				quickPick.canSelectMany = true;
-				// Pre-select an item by setting it in `selectedItems` (not `activeItems`).
-				let itemsToBeSelected: vscode.QuickPickItem[] = [];
-				quickPick.items.forEach((item) => {
-					if (!excludedItems.includes(item.label?.trim()) && !uncheckedItems.includes(item.label?.trim())) {
-						itemsToBeSelected.push(item);  // Pre-select items that are NOT in the exclusion list (i.e., items to be included)
+					if (!vsCodeConfigExists(configFilePath)) {
+						const existingSections = readConfigFile(configFilePath);
+						existingSections.push(sectionConfig);
+						writeConfigFile(configFilePath, existingSections);
 					}
-				});
+					else {
+						const sectionFromConfig = readConfigFile(configFilePath).filter(x => x.name === Enums.VSCode);
+						if (sectionFromConfig.length > 0) {
+							sectionConfig = sectionFromConfig[0];
+						}
+					}
 
-				quickPick.selectedItems = itemsToBeSelected;  // Pre-select the items to be included
-				let currentlySelectedItems: Set<string> = new Set(); // Tracks currently selected items 
-				quickPick.onDidChangeSelection(selection => {
-					const selectedItems = new Set(selection.map(item => item.label));
+					let uncheckedItems = [];
+					if (sectionConfig.values.uncheckedItems.length > 0 && sectionConfig.values.uncheckedItems.includes(',')) {
+						uncheckedItems = getUncheckedItems(sectionConfig.values.uncheckedItems.split(','));
+					}
+					else {
+						uncheckedItems = getUncheckedItems();
+					}
 
-					// Find items that have been newly selected or deselected
-					const newlySelectedItems = [...selectedItems].filter(item => !currentlySelectedItems.has(item));
-					const newlyDeselectedItems = [...currentlySelectedItems].filter(item => !selectedItems.has(item));
+					let excludedItems = [];
+					if (sectionConfig.values.excludedItems.length > 0 && sectionConfig.values.excludedItems.includes(',')) {
+						excludedItems = getExcludedItems(sectionConfig.values.excludedItems.split(','));
+					}
+					else {
+						excludedItems = getExcludedItems();
+					}
 
-					// Process newly selected items (recursive selection for directories)
-					newlySelectedItems.forEach(item => {
-						// If parent (directory) selected, add all children
-						const children = getChildren(item, items);
-						children.forEach(child => selectedItems.add(child));
+					let supportedExtensions = [];
+					if (sectionConfig.values.supportedExtensions.length > 0 && sectionConfig.values.supportedExtensions.includes(',')) {
+						supportedExtensions = getSupportedExtensions(sectionConfig.values.supportedExtensions.split(','));
+					}
+					else {
+						supportedExtensions = getSupportedExtensions();
+					}
+
+					const allFiles = getItemsRecursively(excludedItems, workspaceFsPath);
+					if (allFiles.includes('.gitignore')) {
+						getGitIgnoreItems(workspaceFsPath, excludedItems);
+					}
+
+					// Show user a quick pick with only folder list to exclude
+					var quickPick = await vscode.window.createQuickPick();
+					quickPick.title = 'Select files and folders';
+					quickPick.placeholder = 'Select files to generate documentation for..';
+					quickPick.ignoreFocusOut = true;
+					quickPick.step = 1;
+					quickPick.totalSteps = 1;
+
+					// Get all directories and files recursively 
+					const items = excludeInvalidFiles(allFiles);
+					quickPick.items = items.map(item => {
+						const fullPath = path.join(workspaceFsPath, item);
+						const isDirectory = fs.statSync(fullPath).isDirectory();
+						const ext = path.extname(item).toLowerCase();
+						return {
+							label: item,
+							description: fullPath,
+							iconPath: isDirectory
+								? new vscode.ThemeIcon('folder')
+								: new vscode.ThemeIcon(getFileIcon(ext))
+
+						};
+					});
+					quickPick.canSelectMany = true;
+					// Pre-select an item by setting it in `selectedItems` (not `activeItems`).
+					let itemsToBeSelected: vscode.QuickPickItem[] = [];
+					quickPick.items.forEach((item) => {
+						if (!excludedItems.includes(item.label?.trim()) && !uncheckedItems.includes(item.label?.trim())) {
+							itemsToBeSelected.push(item);  // Pre-select items that are NOT in the exclusion list (i.e., items to be included)
+						}
 					});
 
-					// Process newly deselected items (recursive deselection for directories)
-					newlyDeselectedItems.forEach(item => {
-						// If parent (directory) deselected, remove all its children
-						const children = getChildren(item, items);
-						children.forEach(child => selectedItems.delete(child));
-					});
+					quickPick.selectedItems = itemsToBeSelected;  // Pre-select the items to be included
+					let currentlySelectedItems: Set<string> = new Set(); // Tracks currently selected items 
+					quickPick.onDidChangeSelection(selection => {
+						const selectedItems = new Set(selection.map(item => item.label));
 
-					// Update the final selection state
-					currentlySelectedItems = new Set(selectedItems);
-					quickPick.selectedItems = quickPick.items.filter(item => selectedItems.has(item.label));
-				});
-				quickPick.onDidAccept(async () => {
-					const selectedItems = quickPick.selectedItems;
-					let itemsToBeIncluded = selectedItems.map(item => item.label) ?? undefined;
+						// Find items that have been newly selected or deselected
+						const newlySelectedItems = [...selectedItems].filter(item => !currentlySelectedItems.has(item));
+						const newlyDeselectedItems = [...currentlySelectedItems].filter(item => !selectedItems.has(item));
 
-					if (itemsToBeIncluded !== undefined && itemsToBeIncluded.length > 0) {
-						let uncheckedItems = quickPick.items
-							.filter(item => !selectedItems.includes(item))
-							.map(item => item.label);
-
-						// Update the configuration with the selected items
-						itemsToBeIncluded = removeDuplicates(itemsToBeIncluded);
-						uncheckedItems = removeDuplicates(uncheckedItems);
-						excludedItems = removeDuplicates(excludedItems.concat(DocuGenConstants.excludedItems.split(',')));
-						supportedExtensions = removeDuplicates(supportedExtensions);
-
-						docuGenConfig.update(Enums.VSCode, SettingEnums.IncludedItems, itemsToBeIncluded.join());
-						docuGenConfig.update(Enums.VSCode, SettingEnums.UncheckedItems, uncheckedItems.join());
-						docuGenConfig.update(Enums.VSCode, SettingEnums.ExcludedItems, excludedItems.join());
-						docuGenConfig.update(Enums.VSCode, SettingEnums.SupportedExtensions, supportedExtensions.join());
-
-						vscode.window.withProgress({
-							location: vscode.ProgressLocation.Notification,
-							title: "DocuGen: ",
-						}, async (progress, token) => {
-							try {
-								progress.report({ message: "Generating documentation for selected files..." });
-								await new DocuGen(
-									getSecretProvider()
-								).scanRepository(
-									sectionConfig,
-									workspacePathPrefix,
-									excludeInvalidFiles(excludedItems),
-									excludeInvalidFiles(supportedExtensions),
-									excludeInvalidFiles(itemsToBeIncluded),
-									defaultDocumentFileNamePath);
-
-								progress.report({ message: "Please verify the documentation" });
-
-							} catch (error) {
-								vscode.window.showErrorMessage(`DocuGen: ${error}`);
-							}
+						// Process newly selected items (recursive selection for directories)
+						newlySelectedItems.forEach(item => {
+							// If parent (directory) selected, add all children
+							const children = getChildren(item, items);
+							children.forEach(child => selectedItems.add(child));
 						});
-					} else {
-						vscode.window.showInformationMessage('No item selected.');
-					}
 
-					quickPick.dispose();  // Always dispose of the quickPick once done.
-				});
+						// Process newly deselected items (recursive deselection for directories)
+						newlyDeselectedItems.forEach(item => {
+							// If parent (directory) deselected, remove all its children
+							const children = getChildren(item, items);
+							children.forEach(child => selectedItems.delete(child));
+						});
 
-				quickPick.show();
+						// Update the final selection state
+						currentlySelectedItems = new Set(selectedItems);
+						quickPick.selectedItems = quickPick.items.filter(item => selectedItems.has(item.label));
+					});
+					quickPick.onDidAccept(async () => {
+						const selectedItems = quickPick.selectedItems;
+						let itemsToBeIncluded = selectedItems.map(item => item.label) ?? undefined;
+
+						if (itemsToBeIncluded !== undefined && itemsToBeIncluded.length > 0) {
+							let uncheckedItems = quickPick.items
+								.filter(item => !selectedItems.includes(item))
+								.map(item => item.label);
+
+							// Update the configuration with the selected items
+							itemsToBeIncluded = removeDuplicates(itemsToBeIncluded);
+							uncheckedItems = removeDuplicates(uncheckedItems);
+							excludedItems = removeDuplicates(excludedItems.concat(DocuGenConstants.excludedItems.split(',')));
+							supportedExtensions = removeDuplicates(supportedExtensions.concat(DocuGenConstants.supportedExtensions.split(',')));
+
+							sectionConfig.values.includedItems = itemsToBeIncluded.join();
+							sectionConfig.values.uncheckedItems = uncheckedItems.join();
+							sectionConfig.values.excludedItems = excludedItems.join();
+							sectionConfig.values.supportedExtensions = supportedExtensions.join();
+
+							updateConfigFile(configFilePath, sectionConfig);
+
+							vscode.window.withProgress({
+								location: vscode.ProgressLocation.Notification,
+								title: "DocuGen: ",
+							}, async (progress, token) => {
+								try {
+									progress.report({ message: "Generating documentation for selected files..." });
+
+									const workspaceSettings = vscode.workspace.getConfiguration(extensionName);
+									const modelEndpoint = workspaceSettings.get('modelEndpoint') as string;
+									const modelName = workspaceSettings.get('modelName') as string;
+									const modelVersion = workspaceSettings.get('modelApiVersion') as string;
+									const useOllama = workspaceSettings.get('useOllama') as boolean;
+									const documentationFilePath = workspacePathPrefix + sectionConfig.values.defaultDocumentFileName + defaultExtension;
+
+									const documentation = await new DocuGen(secretProvider)
+										.generateDocumentation(
+											workspacePathPrefix,
+											excludeInvalidFiles(excludedItems),
+											excludeInvalidFiles(supportedExtensions),
+											excludeInvalidFiles(itemsToBeIncluded),
+											documentationFilePath,
+											modelEndpoint,
+											modelName,
+											modelVersion,
+											useOllama
+										);
+
+									await writeToFile(documentation, documentationFilePath);
+
+									progress.report({ message: "Please verify the documentation" });
+
+								} catch (error) {
+									vscode.window.showErrorMessage(`DocuGen: ${error}`);
+								}
+							});
+						} else {
+							vscode.window.showInformationMessage('No item selected.');
+						}
+
+						quickPick.dispose();  // Always dispose of the quickPick once done.
+					});
+
+					quickPick.show();
+				}
 			}
 		}
 	});
-
-	context.subscriptions.push(scan);
 }
 
 // This method is called when your extension is deactivated
 export function deactivate() { }
+
+function validModelConfig(modelEndpoint: string, modelName: string, modelVersion: string, modelApiKey: string): boolean {
+	if (modelApiKey === undefined || modelApiKey === '') {
+		vscode.window.showErrorMessage("Please define model API key to generate documentation.");
+		vscode.commands.executeCommand('workbench.action.openSettings', extensionName + '.' + 'modelApiKey');
+		return false;
+	}
+	if (modelEndpoint === undefined || modelEndpoint === '') {
+		vscode.window.showErrorMessage("Please define model endpoint to generate documentation.");
+		vscode.commands.executeCommand('workbench.action.openSettings', extensionName + '.' + 'modelEndpoint');
+		return false;
+	}
+	else if (!modelEndpoint.includes('https://')) {
+		vscode.window.showErrorMessage("Please define a valid model endpoint to generate documentation.");
+		vscode.commands.executeCommand('workbench.action.openSettings', extensionName + '.' + 'modelEndpoint');
+		return false;
+	}
+	if (modelName === undefined || modelName === '') {
+		vscode.window.showErrorMessage("Please define model name to generate documentation.");
+		vscode.commands.executeCommand('workbench.action.openSettings', extensionName + '.' + 'modelName');
+		return false;
+	}
+	if (modelVersion === undefined || modelVersion === '') {
+		vscode.window.showErrorMessage("Please define model version to generate documentation.");
+		vscode.commands.executeCommand('workbench.action.openSettings', extensionName + '.' + 'modelApiVersion');
+		return false;
+	}
+
+	return true;
+
+}
+
+async function writeToFile(content: string, filePath: string) {
+	try {
+		// Check if the directory exists
+		if (!fs.existsSync(path.dirname(filePath))) {
+			await fs.promises.mkdir(path.dirname(filePath), { recursive: true });
+		}
+		console.log('Writing to file', filePath);
+		await fs.promises.writeFile(filePath, content);
+		console.log('Document generated successfully:', filePath);
+	} catch (error) {
+		throw error;
+		// Handle the error appropriately, e.g., show a user-friendly message or retry the operation
+	}
+}
 
 function excludeInvalidFiles(files: string[]) {
 	return files.filter(x => path.extname(x) !== '');
@@ -186,7 +288,7 @@ function getFileIcon(extension: string): string {
 }
 
 // Function to get all directories and files recursively 
-function getItemsRecursively(docuGenConfig: DocuGenConfig, excludedItems: string[], source: string, parent: string = ''): string[] {
+function getItemsRecursively(excludedItems: string[], source: string, parent: string = ''): string[] {
 	let itemsList: string[] = [];
 
 	try {
@@ -194,8 +296,8 @@ function getItemsRecursively(docuGenConfig: DocuGenConfig, excludedItems: string
 		const filteredItems = removeDuplicates(items.filter(x => !excludedItems.includes(x)));
 		for (const item of filteredItems) {
 			// Exclude items starting with a dot ('.')
-			if (item.startsWith('.')) {
-				continue; // Skip files and folders starting with '.'
+			if (!/^[A-Za-z0-9]/.test(item)) {
+				continue; // Skip items not starting with an alphabet or valid number
 			}
 
 			const fullPath = path.join(source, item);
@@ -206,13 +308,13 @@ function getItemsRecursively(docuGenConfig: DocuGenConfig, excludedItems: string
 				itemsList.push(relativePath);
 
 				// Recursively get subdirectories and files 
-				itemsList = itemsList.concat(getItemsRecursively(docuGenConfig, excludedItems, fullPath, relativePath));
+				itemsList = itemsList.concat(getItemsRecursively(excludedItems, fullPath, relativePath));
 			} else {
 				// Add the file to the list
 				const ext = path.extname(item).toLowerCase();
 				if (ext.length > 0) {
 					// Exclude non-standard file types
-					const isSupported = isSupportedExtFile(docuGenConfig, ext);
+					const isSupported = isSupportedExtFile(ext);
 					if (isSupported === true) {
 						// Add the file to the list 
 						itemsList.push(relativePath);
@@ -254,24 +356,85 @@ function getGitIgnoreItems(workspaceFsPath: string, excludedItems: string[]): st
 	return excludedItems;
 }
 
-function getExcludedItems(docuGenConfig: DocuGenConfig): string[] {
-	let excludedFolders = docuGenConfig.get(Enums.VSCode, SettingEnums.ExcludedItems, DocuGenConstants.excludedItems);
-	return removeDuplicates(excludedFolders.split(',').concat(DocuGenConstants.excludedItems.split(',')).filter(x => x.trim() !== ''));
+function vsCodeConfigExists(filePath: string): boolean {
+
+	try {
+		const fileContents = fs.readFileSync(filePath).toString();
+		if (fileContents.length > 0) {
+			return JSON.parse(fileContents).map((x: any) => {
+				if (x.name === Enums.VSCode) {
+					return true;
+				}
+			});
+		}
+
+		return false;
+	}
+	catch (error) {
+		return false;
+	}
 }
 
-function getUncheckedItems(docuGenConfig: DocuGenConfig): string[] {
-	let excludedFolders = docuGenConfig.get(Enums.VSCode, SettingEnums.UncheckedItems, "");
-	return removeDuplicates(excludedFolders.split(',').filter(x => x.trim() !== ''));
+function readConfigFile(configFilePath: string): SectionConfig[] {
+	if (fs.existsSync(configFilePath)) {
+		const fileContents = fs.readFileSync(configFilePath, 'utf-8');
+		return JSON.parse(fileContents);
+	}
+	else {
+		return [];
+	}
 }
 
-function getSupportedExtensions(docuGenConfig: DocuGenConfig) {
-	let supportedExtensions = docuGenConfig.get(Enums.VSCode, SettingEnums.SupportedExtensions, DocuGenConstants.supportedExtensions);
-	return removeDuplicates(supportedExtensions.split(',').concat(DocuGenConstants.supportedExtensions.split(',')).filter(x => x.trim() !== ''));
+function updateConfigFile(filePath: string, section: SectionConfig) {
+	if (section !== undefined) {
+		if (fs.existsSync(filePath)) {
+			const existingSectionsWithoutVSCode = readConfigFile(filePath).filter(x => x.name !== Enums.VSCode);
+			existingSectionsWithoutVSCode.push(section);
+
+			writeConfigFile(filePath, existingSectionsWithoutVSCode);
+		}
+		else {
+			writeConfigFile(filePath, [section]);
+		}
+	}
+	else {
+		throw new Error("Section is undefined");
+	}
+}
+
+function writeConfigFile(filePath: string, sections: SectionConfig[]) {
+	if (sections !== undefined && sections.length > 0) {
+		fs.writeFileSync(filePath, JSON.stringify(sections, null, 2), 'utf-8');
+	}
+	else {
+		throw new Error("Sections are undefined");
+	}
+}
+
+function getExcludedItems(excludedItems: string[] = DocuGenConstants.excludedItems.split(',')): string[] {
+	if (excludedItems === undefined) {
+		return DocuGenConstants.excludedItems.split(',');
+	}
+	return removeDuplicates(excludedItems.concat(DocuGenConstants.excludedItems.split(',')).filter(x => x.trim() !== ''));
+}
+
+function getUncheckedItems(uncheckedItems: string[] = []): string[] {
+	if (uncheckedItems === undefined) {
+		return [];
+	}
+	return removeDuplicates(uncheckedItems.filter(x => x.trim() !== ''));
+}
+
+function getSupportedExtensions(supportedExtensions: string[] = DocuGenConstants.supportedExtensions.split(',')): string[] {
+	if (supportedExtensions === undefined) {
+		return DocuGenConstants.supportedExtensions.split(',');
+	}
+	return removeDuplicates(supportedExtensions.concat(DocuGenConstants.supportedExtensions.split(',')).filter(x => x.trim() !== ''));
 }
 
 // Function to determine if a file extension should be excluded
-function isSupportedExtFile(docuGenConfig: DocuGenConfig, extension: string): boolean {
-	return getSupportedExtensions(docuGenConfig).includes(extension);
+function isSupportedExtFile(extension: string): boolean {
+	return getSupportedExtensions().includes(extension);
 }
 
 function getSecretProvider() {
