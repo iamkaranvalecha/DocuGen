@@ -2,7 +2,7 @@ export enum Enums {
     VSCode = "VSCode",
     VisualStudio = "VisualStudio",
     JetBrains = "JetBrains",
-    GithubActions = "GithubActions",
+    GitHubActions = "GitHubActions",
     DevOps = "DevOps"
 }
 
