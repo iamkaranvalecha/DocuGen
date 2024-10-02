@@ -119,12 +119,11 @@ export function activate(context: vscode.ExtensionContext) {
 							try {
 								progress.report({ message: "Generating documentation for selected files..." });
 								await new DocuGen(
-									getSecretProvider(),
-									workspacePathPrefix
+									getSecretProvider()
 								).scanRepository(
 									sectionConfig,
 									workspacePathPrefix,
-									excludeInvalidFiles(uncheckedItems),
+									excludeInvalidFiles(excludedItems),
 									excludeInvalidFiles(supportedExtensions),
 									excludeInvalidFiles(itemsToBeIncluded),
 									defaultDocumentFileNamePath);
