@@ -18,7 +18,7 @@
         "title": "Generate Document by scanning repository"
       }
     ],
-    "configuration":[
+    "configuration": [
       {
         "title": "DocuGen",
         "scope": "resource",
@@ -133,9 +133,11 @@
     "pretest": "npm run compile-tests && npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
     "test": "vscode-test",
-    "problemMatcher": "$tsc"
+    "problemMatcher": "$tsc",
+    "postinstall": "node ../install-deps.js"
   },
   "devDependencies": {
+    "@types/estree": "^1.0.6",
     "@types/mocha": "^10.0.7",
     "@types/node": "20.x",
     "@types/vscode": "^1.92.0",
@@ -150,7 +152,6 @@
     "webpack-cli": "^5.1.4"
   },
   "dependencies": {
-    "axios": "^1.7.6",
-    "openai": "^4.57.0"
+    "docugen": "file:../../Core"
   }
 }

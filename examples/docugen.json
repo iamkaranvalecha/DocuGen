@@ -1,0 +1,16 @@
+[
+  {
+    "name": "VSCode",
+    "values": {
+      "defaultDocumentFileName": "DocuGen",
+      "includedItems": "CatalogItemService.cs",
+      "excludedItems": "DocuGen,.git,.github,.semversioner,.vscode,.vs,node_modules,dist,build,.venv,bin,obj,.config,bower_components,out,target,coverage,.svn,.hg,.idea,Thumbsdb,.DS_Store,logs,test-reports,docugen.json",
+      "uncheckedItems": "create_graphrag_config.py,integration.spec.ts,karan.py,Logic.java,queue.yaml,RandomFiles\\randomQueue.yaml,test-api.spec.ts,todo-list.component.html,todo-list.component.ts,wow.cs",
+      "supportedExtensions": ".js,.ts,.json,.html,.css,.less,.scss,.vue,.jsx,.tsx,.py,.ipynb,.yaml,.yml,.java,.xml,.properties,.c,.cpp,.h,Makefile,.cs,.config,.rb,.gemspec,.gemfile,.rake,.php,.swift,.plist,.kt,.m,.bat,.ps1,Dockerfile,.tf",
+      "useOllama": false,
+      "modelEndpoint": "https://vsmodel.openai.azure.com",
+      "modelName": "gpt-4o-completions",
+      "modelVersion": "2023-03-15-preview"
+    }
+  }
+]

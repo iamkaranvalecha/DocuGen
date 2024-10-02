@@ -139,3 +139,4 @@ node_modules/
 node_modules 
 
 .vs/
+package-lock.json
