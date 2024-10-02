@@ -4,6 +4,7 @@
 	  "target": "es6",
 	  "outDir": "./dist",
 	  "rootDir": "./src",
+	  "noEmit": false,
 	  "sourceMap": true,
 	  "strictPropertyInitialization": false,
 	  "resolveJsonModule": true,
