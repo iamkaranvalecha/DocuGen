@@ -152,6 +152,6 @@
     "webpack-cli": "^5.1.4"
   },
   "dependencies": {
-    "docugen": "file:../../Core/src"
+    "docugen": "file:../../Core"
   }
 }
