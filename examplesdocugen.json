@@ -1,12 +1,12 @@
 [
   {
-    "name": "0",
-    "workspacePath": "c:\\Repos\\Personal\\KA-Innovations\\DocuGen\\examples",
+    "name": "VSCode",
     "values": {
-      "excludeItemsFilePaths": [],
-      "excludeExtensionsFilePaths": [],
-      "itemsToBeIncludedFilePaths": [],
-      "documentFilePath": "",
+      "defaultDocumentFileName": "DocuGen",
+      "includedItems": "",
+      "excludedItems": "DocuGen,docugen.json,.git,.github,.semversioner,.vscode,.vs,node_modules,dist,build,.venv,bin,obj,.config,bower_components,out,target,coverage,.svn,.hg,.idea,Thumbsdb,.DS_Store,logs,test-reports",
+      "uncheckedItems": "",
+      "supportedExtensions": ".js,.ts,.json,.html,.css,.less,.scss,.vue,.jsx,.tsx,.py,.ipynb,.yaml,.yml,.java,.xml,.properties,.c,.cpp,.h,Makefile,.cs,.config,.rb,.gemspec,.gemfile,.rake,.php,.swift,.plist,.kt,.m,.bat,.ps1,Dockerfile,.tf",
       "useOllama": false,
       "modelEndpoint": "",
       "modelName": "",
