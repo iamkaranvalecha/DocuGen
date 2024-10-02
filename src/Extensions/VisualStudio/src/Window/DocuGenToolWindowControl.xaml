@@ -1,0 +1,89 @@
+﻿<UserControl x:Class="DocuGen.Window.DocuGenToolWindowControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:vsshell="clr-namespace:Microsoft.VisualStudio.Shell;assembly=Microsoft.VisualStudio.Shell.15.0"
+             mc:Ignorable="d"
+             Name="MyToolWindow">
+
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <!-- For title and button -->
+            <RowDefinition Height="*"/>
+            <!-- For form elements -->
+        </Grid.RowDefinitions>
+
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Title and Button in a single row -->
+        <DockPanel Grid.Row="0" LastChildFill="True" VerticalAlignment="Center" Margin="0, 0, 0, 0">
+            <!-- Title -->
+            <Label Content="DocuGen" 
+                   FontSize="20" 
+                   FontWeight="SemiBold" 
+                   Margin="0,0,10,0"
+                   VerticalAlignment="Center"
+                   DockPanel.Dock="Left"/>
+        </DockPanel>
+
+        <!-- Form Elements in ScrollViewer -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <!-- File Name -->
+                <TextBlock Text="File Name" FontWeight="DemiBold" Margin="0,5"/>
+                <TextBox x:Name="DefaultDocumentFileNameTextBox" Margin="0,0,0,10"/>
+
+                <!-- Included Items -->
+                <TextBlock Text="Included Items" FontWeight="DemiBold" Margin="0,5"/>
+                <TextBox x:Name="IncludedItemsTextBox" Margin="0,0,0,10"/>
+
+                <!-- Excluded Items -->
+                <TextBlock Text="Excluded Items" FontWeight="DemiBold" Margin="0,5"/>
+                <ComboBox x:Name="ExcludedItemsComboBox" Margin="0,0,0,10"/>
+
+                <!-- Unchecked Items -->
+                <TextBlock Text="Unchecked Items" FontWeight="DemiBold" Margin="0,5"/>
+                <ComboBox x:Name="UncheckedItemsComboBox" Margin="0,0,0,10"/>
+
+                <!-- Supported Extensions -->
+                <TextBlock Text="Supported Extensions" FontWeight="DemiBold" Margin="0,5"/>
+                <ComboBox x:Name="SupportedExtensionsComboBox" Margin="0,0,0,10"/>
+
+                <!-- Use Ollama Checkbox -->
+                <CheckBox x:Name="UseOllamaCheckBox" Content="Use Ollama" Margin="0,10,0,10"/>
+
+                <!-- Model Endpoint -->
+                <TextBlock Text="Model Endpoint" FontWeight="DemiBold" Margin="0,5"/>
+                <TextBox x:Name="ModelEndpointTextBox" Margin="0,0,0,10"/>
+
+                <!-- Model Name -->
+                <TextBlock Text="Model Name" FontWeight="DemiBold" Margin="0,5"/>
+                <TextBox x:Name="ModelNameTextBox" Margin="0,0,0,10"/>
+
+                <!-- Model Version -->
+                <TextBlock Text="Model Version" FontWeight="DemiBold" Margin="0,5"/>
+                <TextBox x:Name="ModelVersionTextBox" Margin="0,0,0,10"/>
+
+                <!-- Button -->
+                <Button x:Name="GenerateDocumentation" 
+                        FontSize="15" 
+                        FontWeight="SemiBold"
+                        Background="Transparent"
+                        BorderBrush="Gray"
+                        BorderThickness="0.5"
+                        ToolTip="Generate Documentation"
+                        VerticalAlignment="Center"
+                        HorizontalAlignment="Right">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#x1F4D6;" FontSize="20" VerticalAlignment="Center"/>
+                        <TextBlock Text="Generate Documentation" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>
