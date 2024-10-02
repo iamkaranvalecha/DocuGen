@@ -144,9 +144,9 @@ export function activate(context: vscode.ExtensionContext) {
 								.map(item => item.label);
 
 							// Update the configuration with the selected items
-							itemsToBeIncluded = removeDuplicates(itemsToBeIncluded);
-							uncheckedItems = removeDuplicates(uncheckedItems);
-							excludedItems = removeDuplicates(excludedItems.concat(DocuGenConstants.excludedItems.split(',')));
+							itemsToBeIncluded = removeDuplicates(excludeInvalidFiles(itemsToBeIncluded));
+							uncheckedItems = removeDuplicates(excludeInvalidFiles(uncheckedItems));
+							excludedItems = removeDuplicates(excludeInvalidFiles(excludedItems.concat(DocuGenConstants.excludedItems.split(','))));
 							supportedExtensions = removeDuplicates(supportedExtensions.concat(DocuGenConstants.supportedExtensions.split(',')));
 
 							sectionConfig.values.includedItems = itemsToBeIncluded.join();
@@ -173,9 +173,9 @@ export function activate(context: vscode.ExtensionContext) {
 									const documentation = await new DocuGen(secretProvider)
 										.generateDocumentation(
 											workspacePathPrefix,
-											excludeInvalidFiles(excludedItems),
-											excludeInvalidFiles(supportedExtensions),
-											excludeInvalidFiles(itemsToBeIncluded),
+											excludedItems,
+											supportedExtensions,
+											itemsToBeIncluded,
 											documentationFilePath,
 											modelEndpoint,
 											modelName,
@@ -184,6 +184,8 @@ export function activate(context: vscode.ExtensionContext) {
 										);
 
 									await writeToFile(documentation, documentationFilePath);
+
+									vscode.commands.executeCommand('vscode.open', vscode.Uri.file(documentationFilePath));
 
 									progress.report({ message: "Please verify the documentation" });
 
