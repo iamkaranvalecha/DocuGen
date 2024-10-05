@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:vsshell="clr-namespace:Microsoft.VisualStudio.Shell;assembly=Microsoft.VisualStudio.Shell.15.0"
+             xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
              mc:Ignorable="d"
              Name="MyToolWindow">
 
@@ -33,42 +34,46 @@
         <!-- Form Elements in ScrollViewer -->
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
             <StackPanel>
-                <!-- File Name -->
+                <wv2:WebView2 Name="webView" Source="about:blank" Height="200" Width="150" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                    
+                </wv2:WebView2>
+
+                <!-- File Name --><!--
                 <TextBlock Text="File Name" FontWeight="DemiBold" Margin="0,5"/>
                 <TextBox x:Name="DefaultDocumentFileNameTextBox" Margin="0,0,0,10"/>
 
-                <!-- Included Items -->
+                --><!-- Included Items --><!--
                 <TextBlock Text="Included Items" FontWeight="DemiBold" Margin="0,5"/>
                 <TextBox x:Name="IncludedItemsTextBox" Margin="0,0,0,10"/>
 
-                <!-- Excluded Items -->
+                --><!-- Excluded Items --><!--
                 <TextBlock Text="Excluded Items" FontWeight="DemiBold" Margin="0,5"/>
-                <ComboBox x:Name="ExcludedItemsComboBox" Margin="0,0,0,10"/>
+                <TextBox x:Name="ExcludedItemsTextBox" Margin="0,0,0,10"/>
 
-                <!-- Unchecked Items -->
+                --><!-- Unchecked Items --><!--
                 <TextBlock Text="Unchecked Items" FontWeight="DemiBold" Margin="0,5"/>
-                <ComboBox x:Name="UncheckedItemsComboBox" Margin="0,0,0,10"/>
+                <TextBox x:Name="UncheckedItemsTextBox" Margin="0,0,0,10"/>
 
-                <!-- Supported Extensions -->
+                --><!-- Supported Extensions --><!--
                 <TextBlock Text="Supported Extensions" FontWeight="DemiBold" Margin="0,5"/>
-                <ComboBox x:Name="SupportedExtensionsComboBox" Margin="0,0,0,10"/>
+                <TextBox x:Name="SupportedExtensionsTextBox" Margin="0,0,0,10"/>
 
-                <!-- Use Ollama Checkbox -->
+                --><!-- Use Ollama Checkbox --><!--
                 <CheckBox x:Name="UseOllamaCheckBox" Content="Use Ollama" Margin="0,10,0,10"/>
 
-                <!-- Model Endpoint -->
+                --><!-- Model Endpoint --><!--
                 <TextBlock Text="Model Endpoint" FontWeight="DemiBold" Margin="0,5"/>
                 <TextBox x:Name="ModelEndpointTextBox" Margin="0,0,0,10"/>
 
-                <!-- Model Name -->
+                --><!-- Model Name --><!--
                 <TextBlock Text="Model Name" FontWeight="DemiBold" Margin="0,5"/>
                 <TextBox x:Name="ModelNameTextBox" Margin="0,0,0,10"/>
 
-                <!-- Model Version -->
+                --><!-- Model Version --><!--
                 <TextBlock Text="Model Version" FontWeight="DemiBold" Margin="0,5"/>
                 <TextBox x:Name="ModelVersionTextBox" Margin="0,0,0,10"/>
 
-                <!-- Button -->
+                --><!-- Button --><!--
                 <Button x:Name="GenerateDocumentation" 
                         FontSize="15" 
                         FontWeight="SemiBold"
@@ -82,7 +87,7 @@
                         <TextBlock Text="&#x1F4D6;" FontSize="20" VerticalAlignment="Center"/>
                         <TextBlock Text="Generate Documentation" VerticalAlignment="Center" Margin="0,0,5,0"/>
                     </StackPanel>
-                </Button>
+                </Button>-->
             </StackPanel>
         </ScrollViewer>
     </Grid>
