@@ -46,7 +46,7 @@ export function activate(context: vscode.ExtensionContext) {
 						}
 					}
 
-					let uncheckedItems = [];
+					let uncheckedItems: string[] = [];
 					if (sectionConfig.values.uncheckedItems.length > 0 && sectionConfig.values.uncheckedItems.includes(',')) {
 						uncheckedItems = getUncheckedItems(sectionConfig.values.uncheckedItems.split(','));
 					}
@@ -54,7 +54,7 @@ export function activate(context: vscode.ExtensionContext) {
 						uncheckedItems = getUncheckedItems();
 					}
 
-					let excludedItems = [];
+					let excludedItems: string[] = [];
 					if (sectionConfig.values.excludedItems.length > 0 && sectionConfig.values.excludedItems.includes(',')) {
 						excludedItems = getExcludedItems(sectionConfig.values.excludedItems.split(','));
 					}
@@ -62,7 +62,7 @@ export function activate(context: vscode.ExtensionContext) {
 						excludedItems = getExcludedItems();
 					}
 
-					let supportedExtensions = [];
+					let supportedExtensions: string[] = [];
 					if (sectionConfig.values.supportedExtensions.length > 0 && sectionConfig.values.supportedExtensions.includes(',')) {
 						supportedExtensions = getSupportedExtensions(sectionConfig.values.supportedExtensions.split(','));
 					}
@@ -136,9 +136,9 @@ export function activate(context: vscode.ExtensionContext) {
 					});
 					quickPick.onDidAccept(async () => {
 						const selectedItems = quickPick.selectedItems;
-						let itemsToBeIncluded = selectedItems.map(item => item.label) ?? undefined;
+						let itemsToBeIncluded = selectedItems.map(item => item.label) ?? [];
 
-						if (itemsToBeIncluded !== undefined && itemsToBeIncluded.length > 0) {
+						if (itemsToBeIncluded.length > 0) {
 							let uncheckedItems = quickPick.items
 								.filter(item => !selectedItems.includes(item))
 								.map(item => item.label);
@@ -257,7 +257,7 @@ async function writeToFile(content: string, filePath: string) {
 }
 
 function excludeInvalidFiles(files: string[]) {
-	return files.filter(x => path.extname(x) !== '');
+	return files.filter(x => x !== undefined && path.extname(x) !== '');
 }
 
 function removeDuplicates(arr: string[]): string[] {
@@ -417,6 +417,7 @@ function getExcludedItems(excludedItems: string[] = DocuGenConstants.excludedIte
 	if (excludedItems === undefined) {
 		return DocuGenConstants.excludedItems.split(',');
 	}
+
 	return removeDuplicates(excludedItems.concat(DocuGenConstants.excludedItems.split(',')).filter(x => x.trim() !== ''));
 }
 
