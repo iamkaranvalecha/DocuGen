@@ -20,7 +20,7 @@ export class DocuGen {
     workspacePath: string,
     excludeItemsFilePaths: string[],
     excludeExtensionsFilePaths: string[],
-    itemsToBeIncludedFilePaths: string[] = [],
+    itemsToBeIncludedFilePaths: string[],
     documentationFilePath: string,
     modelEndpoint: string,
     modelName: string,
