@@ -3,92 +3,94 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:vsshell="clr-namespace:Microsoft.VisualStudio.Shell;assembly=Microsoft.VisualStudio.Shell.15.0"
-             xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
+             xmlns:platform="clr-namespace:Microsoft.VisualStudio.PlatformUI;assembly=Microsoft.VisualStudio.Shell.15.0"
+             xmlns:toolkit="clr-namespace:Community.VisualStudio.Toolkit;assembly=Community.VisualStudio.Toolkit"
+             toolkit:Themes.UseVsTheme="{Binding UseVsTheme}"
              mc:Ignorable="d"
              Name="MyToolWindow">
 
-    <Grid Margin="10">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <!-- For title and button -->
-            <RowDefinition Height="*"/>
-            <!-- For form elements -->
-        </Grid.RowDefinitions>
+    <UserControl.Resources>
+        <Style x:Key="IconButtonStyle" TargetType="Button">
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="Margin" Value="0,0,10,0"/>
+            <Setter Property="FontFamily" Value="Segoe MDL2 Assets"/>
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+    </UserControl.Resources>
 
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*"/>
-        </Grid.ColumnDefinitions>
+    <DockPanel AllowDrop="False">
+        <Grid Margin="10">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
 
-        <!-- Title and Button in a single row -->
-        <DockPanel Grid.Row="0" LastChildFill="True" VerticalAlignment="Center" Margin="0, 0, 0, 0">
-            <!-- Title -->
-            <Label Content="DocuGen" 
-                   FontSize="20" 
-                   FontWeight="SemiBold" 
-                   Margin="0,0,10,0"
-                   VerticalAlignment="Center"
-                   DockPanel.Dock="Left"/>
-        </DockPanel>
+            <!-- Top row with File Selector and Generate Documentation button -->
+            <Grid Grid.Row="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
 
-        <!-- Form Elements in ScrollViewer -->
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-            <StackPanel>
-                <wv2:WebView2 Name="webView" Source="about:blank" Height="200" Width="150" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-                    
-                </wv2:WebView2>
 
-                <!-- File Name --><!--
-                <TextBlock Text="File Name" FontWeight="DemiBold" Margin="0,5"/>
-                <TextBox x:Name="DefaultDocumentFileNameTextBox" Margin="0,0,0,10"/>
+                <TextBlock Text="Select files to generate documentation" FontWeight="DemiBold" Margin="0,5"/>
 
-                --><!-- Included Items --><!--
-                <TextBlock Text="Included Items" FontWeight="DemiBold" Margin="0,5"/>
-                <TextBox x:Name="IncludedItemsTextBox" Margin="0,0,0,10"/>
-
-                --><!-- Excluded Items --><!--
-                <TextBlock Text="Excluded Items" FontWeight="DemiBold" Margin="0,5"/>
-                <TextBox x:Name="ExcludedItemsTextBox" Margin="0,0,0,10"/>
-
-                --><!-- Unchecked Items --><!--
-                <TextBlock Text="Unchecked Items" FontWeight="DemiBold" Margin="0,5"/>
-                <TextBox x:Name="UncheckedItemsTextBox" Margin="0,0,0,10"/>
-
-                --><!-- Supported Extensions --><!--
-                <TextBlock Text="Supported Extensions" FontWeight="DemiBold" Margin="0,5"/>
-                <TextBox x:Name="SupportedExtensionsTextBox" Margin="0,0,0,10"/>
-
-                --><!-- Use Ollama Checkbox --><!--
-                <CheckBox x:Name="UseOllamaCheckBox" Content="Use Ollama" Margin="0,10,0,10"/>
-
-                --><!-- Model Endpoint --><!--
-                <TextBlock Text="Model Endpoint" FontWeight="DemiBold" Margin="0,5"/>
-                <TextBox x:Name="ModelEndpointTextBox" Margin="0,0,0,10"/>
-
-                --><!-- Model Name --><!--
-                <TextBlock Text="Model Name" FontWeight="DemiBold" Margin="0,5"/>
-                <TextBox x:Name="ModelNameTextBox" Margin="0,0,0,10"/>
-
-                --><!-- Model Version --><!--
-                <TextBlock Text="Model Version" FontWeight="DemiBold" Margin="0,5"/>
-                <TextBox x:Name="ModelVersionTextBox" Margin="0,0,0,10"/>
-
-                --><!-- Button --><!--
-                <Button x:Name="GenerateDocumentation" 
-                        FontSize="15" 
-                        FontWeight="SemiBold"
-                        Background="Transparent"
-                        BorderBrush="Gray"
-                        BorderThickness="0.5"
-                        ToolTip="Generate Documentation"
-                        VerticalAlignment="Center"
-                        HorizontalAlignment="Right">
+                <Button Grid.Column="1" x:Name="GenerateDocumentation" 
+                    Margin="10,0,0,0"
+                    Click="GenerateDocumentation_Click" 
+                    Style="{StaticResource IconButtonStyle}">
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="&#x1F4D6;" FontSize="20" VerticalAlignment="Center"/>
-                        <TextBlock Text="Generate Documentation" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                        <TextBlock Text="&#xE792;" FontFamily="Segoe MDL2 Assets" Margin="0,0,5,0"/>
+                        <TextBlock Text="Generate" FontFamily="Segoe UI"/>
                     </StackPanel>
-                </Button>-->
-            </StackPanel>
-        </ScrollViewer>
-    </Grid>
+                </Button>
+                <Button Grid.Column="2" x:Name="RefreshFiles" 
+                    Click="RefreshButton_Click" 
+                    Style="{StaticResource IconButtonStyle}"
+                    Content="&#xE72C;"
+                    ToolTip="Refresh Files"/>
+            </Grid>
+
+            <!-- Main content area -->
+            <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" Margin="0,10">
+                <StackPanel>
+                    <TextBlock Text="Documentation File Name" FontWeight="DemiBold" Margin="0,5"/>
+                    <TextBox x:Name="DefaultDocumentFileNameTextBox" Height="30" Margin="0,0,0,10" VerticalContentAlignment="Center"/>
+
+                    <TextBlock Text="Included Items" FontWeight="DemiBold" Margin="0,5"/>
+                    <TextBox x:Name="IncludedItemsTextBox" Height="30" Margin="0,0,0,10" VerticalAlignment="Center"/>
+
+                    <TextBlock Text="Excluded Items" FontWeight="DemiBold" Margin="0,5"/>
+                    <TextBox x:Name="ExcludedItemsTextBox" Height="30" Margin="0,0,0,10" VerticalAlignment="Center"/>
+
+                    <TextBlock Text="Unchecked Items" FontWeight="DemiBold" Margin="0,5"/>
+                    <TextBox x:Name="UncheckedItemsTextBox" Height="30" Margin="0,0,0,10" VerticalAlignment="Center"/>
+
+                    <TextBlock Text="Supported Extensions" FontWeight="DemiBold" Margin="0,5"/>
+                    <TextBox x:Name="SupportedExtensionsTextBox" Height="30" Margin="0,0,0,10" VerticalAlignment="Center"/>
+
+                    <CheckBox x:Name="UseOllamaCheckBox" Content="Use Ollama" Margin="0,10,0,10"/>
+
+                    <TextBlock Text="Model Endpoint" FontWeight="DemiBold" Margin="0,5"/>
+                    <TextBox x:Name="ModelEndpointTextBox" Height="30" Margin="0,0,0,10" VerticalAlignment="Center"/>
+
+                    <TextBlock Text="Model Name" FontWeight="DemiBold" Margin="0,5"/>
+                    <TextBox x:Name="ModelNameTextBox" Height="30" Margin="0,0,0,10" VerticalAlignment="Center"/>
+
+                    <TextBlock Text="Model Version" FontWeight="DemiBold" Margin="0,5"/>
+                    <TextBox x:Name="ModelVersionTextBox" Height="30" Margin="0,0,0,10" VerticalAlignment="Center"/>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- Bottom row with Changes section -->
+            <Expander Grid.Row="3" Header="Changes" Margin="0,10,0,0">
+                <TextBlock Text="No changes to display." Margin="10"/>
+            </Expander>
+        </Grid>
+    </DockPanel>
 </UserControl>

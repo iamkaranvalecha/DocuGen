@@ -1,6 +1,11 @@
 ﻿using Microsoft.VisualStudio.Shell;
+using Microsoft.Web.WebView2.Core;
+using Microsoft.Web.WebView2.WinForms;
+using Microsoft.Web.WebView2.Wpf;
 using System;
+using System.IO;
 using System.Runtime.InteropServices;
+using System.Windows.Forms;
 
 namespace DocuGen.Window
 {
@@ -23,12 +28,13 @@ namespace DocuGen.Window
         /// </summary>
         public DocuGenToolWindow() : base(null)
         {
-            this.Caption = "DocuGenToolWindow";
+            this.Caption = "DocuGen";
 
             // This is the user control hosted by the tool window; Note that, even if this class implements IDisposable,
             // we are not calling Dispose on this object. This is because ToolWindowPane calls Dispose on
             // the object returned by the Content property.
             this.Content = new DocuGenToolWindowControl();
         }
+
     }
 }

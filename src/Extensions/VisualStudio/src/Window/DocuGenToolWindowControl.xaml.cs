@@ -1,9 +1,12 @@
-﻿using Microsoft.Web.WebView2.Core;
-using System.Diagnostics.CodeAnalysis;
-using System.IO;
-using System.Threading.Tasks;
+﻿using DocuGen.Components;
+using EnvDTE;
+using EnvDTE80;
+using Microsoft.VisualStudio.Shell;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 
 namespace DocuGen.Window
 {
@@ -12,54 +15,26 @@ namespace DocuGen.Window
     /// </summary>
     public partial class DocuGenToolWindowControl : UserControl
     {
+        private DTE2 _dte;
+        
         /// <summary>
         /// Initializes a new instance of the <see cref="DocuGenToolWindowControl"/> class.
         /// </summary>
         public DocuGenToolWindowControl()
         {
+            ThreadHelper.ThrowIfNotOnUIThread();
             this.InitializeComponent();
-            InitializeWebViewAsync().ConfigureAwait(false).GetAwaiter().GetResult();
-
+            _dte = Package.GetGlobalService(typeof(DTE)) as DTE2;
         }
 
-        private async Task InitializeWebViewAsync()
+        private void GenerateDocumentation_Click(object sender, RoutedEventArgs e)
         {
-            // Set up the WebView2 environment explicitly
-            //var env = await CoreWebView2Environment.CreateAsync();
-
-            // Ensure the WebView2 environment is created
-            await webView.EnsureCoreWebView2Async(null);
-
-            // Load the HTML file into WebView2
-            var htmlPath = Path.Combine(Directory.GetCurrentDirectory(), "WebContent", "index.html");
-            webView.CoreWebView2.Navigate($"file:///{htmlPath}");
-
-            // Handle messages sent from the WebView (JavaScript)
-            webView.CoreWebView2.WebMessageReceived += WebView_WebMessageReceived;
+            //var edgeJsIntegration = new EdgeJsIntegration();
+            //var generatedDocumentation = edgeJsIntegration.GenerateDocumentationAsync(null).ConfigureAwait(false).GetAwaiter().GetResult();
         }
 
-        private void WebView_WebMessageReceived(object sender, CoreWebView2WebMessageReceivedEventArgs e)
+        private void RefreshButton_Click(object sender, RoutedEventArgs e)
         {
-            // Handle messages from the WebView (e.g., button click)
-            string message = e.TryGetWebMessageAsString();
-            MessageBox.Show($"Message from WebView: {message}");
-
-            // Optionally, send a message back to the WebView
-            webView.CoreWebView2.PostWebMessageAsString("Message received in C#!");
-        }
-
-        /// <summary>
-        /// Handles click on the button by displaying a message box.
-        /// </summary>
-        /// <param name="sender">The event sender.</param>
-        /// <param name="e">The event args.</param>
-        [SuppressMessage("Microsoft.Globalization", "CA1300:SpecifyMessageBoxOptions", Justification = "Sample code")]
-        [SuppressMessage("StyleCop.CSharp.NamingRules", "SA1300:ElementMustBeginWithUpperCaseLetter", Justification = "Default event handler naming pattern")]
-        private void button1_Click(object sender, RoutedEventArgs e)
-        {
-            MessageBox.Show(
-                string.Format(System.Globalization.CultureInfo.CurrentUICulture, "Invoked '{0}'", this.ToString()),
-                "DocuGen");
         }
     }
 }
