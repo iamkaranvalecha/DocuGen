@@ -84,7 +84,7 @@ export function activate(context: vscode.ExtensionContext) {
 					quickPick.totalSteps = 1;
 
 					// Get all directories and files recursively 
-					const items = excludeInvalidFiles(allFiles);
+					const items = excludeInvalidExtensions(allFiles);
 					quickPick.items = items.map(item => {
 						const fullPath = path.join(workspaceFsPath, item);
 						const isDirectory = fs.statSync(fullPath).isDirectory();
@@ -144,9 +144,11 @@ export function activate(context: vscode.ExtensionContext) {
 								.map(item => item.label);
 
 							// Update the configuration with the selected items
-							itemsToBeIncluded = removeDuplicates(excludeInvalidFiles(itemsToBeIncluded));
-							uncheckedItems = removeDuplicates(excludeInvalidFiles(uncheckedItems));
-							excludedItems = removeDuplicates(excludeInvalidFiles(excludedItems.concat(DocuGenConstants.excludedItems.split(','))));
+							itemsToBeIncluded = removeDuplicates(excludeInvalidExtensions(itemsToBeIncluded));
+							uncheckedItems = removeDuplicates(excludeInvalidExtensions(uncheckedItems));
+							excludedItems = removeDuplicates(excludeInvalidFilesAndFolder(excludedItems).concat(
+								DocuGenConstants.excludedItems.split(',')
+							));
 							supportedExtensions = removeDuplicates(supportedExtensions.concat(DocuGenConstants.supportedExtensions.split(',')));
 
 							sectionConfig.values.includedItems = itemsToBeIncluded.join();
@@ -256,8 +258,15 @@ async function writeToFile(content: string, filePath: string) {
 	}
 }
 
-function excludeInvalidFiles(files: string[]) {
+function excludeInvalidExtensions(files: string[]) {
 	return files.filter(x => x !== undefined && path.extname(x) !== '');
+}
+
+export function excludeInvalidFilesAndFolder(files: string[]) {
+	return files.filter(
+		x =>
+			x !== undefined && x !== '' && !x.includes(DocuGenConstants.excludedItems)
+	)
 }
 
 function removeDuplicates(arr: string[]): string[] {
@@ -298,7 +307,11 @@ function getItemsRecursively(excludedItems: string[], source: string, parent: st
 		const filteredItems = removeDuplicates(items.filter(x => !excludedItems.includes(x)));
 		for (const item of filteredItems) {
 			// Exclude items starting with a dot ('.')
-			if (!/^[A-Za-z0-9]/.test(item)) {
+			if (
+				!/^[A-Za-z0-9].*/.test(item) ||
+				item.startsWith('.') ||
+				item.startsWith('_')
+			) {
 				continue; // Skip items not starting with an alphabet or valid number
 			}
 
