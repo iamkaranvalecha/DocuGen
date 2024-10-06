@@ -67,6 +67,7 @@
     <Compile Include="Window\Settings.xaml.cs">
       <DependentUpon>Settings.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Window\VSPackage1.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Key.snk" />
@@ -92,9 +93,6 @@
       <Version>17.11.260</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.VSSDK.BuildTools" Version="17.11.435" />
-    <PackageReference Include="Microsoft.Web.WebView2">
-      <Version>1.0.2792.45</Version>
-    </PackageReference>
   </ItemGroup>
   <ItemGroup>
     <Page Include="Window\DocuGenToolWindowControl.xaml">
@@ -111,6 +109,7 @@
     </Page>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Window\Resources\VSPackage1.ico" />
     <VSCTCompile Include="Window\DocuGenToolWindowPackage.vsct">
       <ResourceName>Menus.ctmenu</ResourceName>
     </VSCTCompile>
