@@ -4,7 +4,6 @@ import { ISecretProvider } from './providers/ISecretProvider';
 import { FileSection } from './models/FileSection';
 import { Constants } from './constants';
 import { Providers } from './providers';
-import { SectionConfig } from './models/SectionConfig';
 
 export class DocuGen {
   private ISecretProvider: ISecretProvider;
@@ -21,7 +20,7 @@ export class DocuGen {
     workspacePath: string,
     excludeItemsFilePaths: string[],
     excludeExtensionsFilePaths: string[],
-    itemsToBeIncludedFilePaths: (string | undefined)[],
+    itemsToBeIncludedFilePaths: string[],
     documentationFilePath: string,
     modelEndpoint: string,
     modelName: string,
@@ -52,7 +51,7 @@ export class DocuGen {
     }
   }
 
-  private async updateExistingDocumentation(workspacePath: string, documentationFilePath: string, excludeExtensionsFilePaths: string[], itemsToBeIncludedFilePaths: (string | undefined)[], useOllama: boolean, modelEndpoint: string, modelName: string, modelVersion: string) {
+  private async updateExistingDocumentation(workspacePath: string, documentationFilePath: string, excludeExtensionsFilePaths: string[], itemsToBeIncludedFilePaths: string[], useOllama: boolean, modelEndpoint: string, modelName: string, modelVersion: string) {
     // Read the file & split in sections based on '### File:' format
     let fileContent = await this.readDocumentationFileContent(workspacePath, documentationFilePath);
     if (!fileContent) {
@@ -208,7 +207,7 @@ export class DocuGen {
     }
   }
 
-  private async generateDocumentationForFiles(workspacePath: string, files: (string | undefined)[], useOllama: boolean, modelEndpoint: string, modelName: string, modelVersion: string): Promise<string> {
+  private async generateDocumentationForFiles(workspacePath: string, files: string[], useOllama: boolean, modelEndpoint: string, modelName: string, modelVersion: string): Promise<string> {
     let fileDocumentation = Constants.fileTitle;
     console.log('Generating documentation for files:', files);
     for (const file of this.excludeInvalidFiles(files)) {
@@ -229,7 +228,7 @@ export class DocuGen {
     return fileDocumentation;
   }
 
-  private excludeInvalidFiles(files: (string | undefined)[]) {
+  private excludeInvalidFiles(files: string[]) {
     return files.filter(x => x !== undefined && path.extname(x) !== '')
   }
 
