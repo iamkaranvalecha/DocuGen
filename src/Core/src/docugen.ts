@@ -36,7 +36,7 @@ export class DocuGen {
         documentation = await this.generateDocumentationForFiles(workspacePath, itemsToBeIncludedFilePaths, modelProvider, modelEndpoint, modelName, modelVersion);
       }
       else if (itemsToBeIncludedFilePaths !== undefined && itemsToBeIncludedFilePaths.length > 0) {
-        documentation = await this.updateExistingDocumentation(workspacePath, documentationFilePath, excludeExtensionsFilePaths, itemsToBeIncludedFilePaths, useOllama, modelEndpoint, modelName, modelVersion);
+        documentation = await this.updateExistingDocumentation(workspacePath, documentationFilePath, excludeExtensionsFilePaths, itemsToBeIncludedFilePaths, modelProvider, modelEndpoint, modelName, modelVersion);
       }
       else{
         throw new Error("No files to be included in documentation.");
