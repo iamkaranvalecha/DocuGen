@@ -23,11 +23,15 @@
         "title": "DocuGen",
         "scope": "resource",
         "properties": {
-          "docugen.useOllama": {
-            "type": "boolean",
-            "description": "Select when we want to use Ollama integrated models",
-            "default": false,
-            "title": "Use Ollama",
+          "docugen.modelProvider": {
+            "type": "string",
+            "enum": [
+              "AzureOpenAI",
+              "Ollama"
+            ],
+            "description": "Select a model provider from the pre-defined list",
+            "default": "AzureOpenAI",
+            "title": "Model Provider",
             "workspace": true,
             "scope": "resource"
           },
@@ -35,7 +39,7 @@
             "type": "string",
             "description": "Model name. (example: gpt-4o)",
             "default": "gpt-4o",
-            "title": "model name",
+            "title": "Model Name",
             "workspace": true,
             "scope": "resource"
           },
@@ -43,7 +47,7 @@
             "type": "string",
             "description": "Azure OpenAI model endpoint. (example: https://<instance>.openai.azure.com)",
             "default": "https://vsmodel.openai.azure.com",
-            "title": "model endpoint",
+            "title": "Model Endpoint",
             "workspace": true,
             "scope": "resource"
           },
@@ -59,7 +63,7 @@
             "type": "string",
             "description": "Model API key",
             "default": "",
-            "title": "API key.",
+            "title": "API key",
             "workspace": true,
             "scope": "resource"
           }

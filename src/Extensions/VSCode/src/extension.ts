@@ -2,7 +2,7 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 import * as fs from 'fs';
-import { DocuGen, Constants as DocuGenConstants, Enums, SectionConfig, SettingEnums } from 'docugen';
+import { DocuGen, Constants as DocuGenConstants, Enums, SectionConfig, ModelProviderEnums } from 'docugen';
 import path from 'path';
 import { VSCodeSecretProvider } from './providers/VSCodeSecretProvider';
 const defaultExtension: string = '.md';
@@ -22,7 +22,6 @@ export function activate(context: vscode.ExtensionContext) {
 				const modelVersion = workspaceSettings.get('modelApiVersion') as string ?? undefined;
 				const secretProvider = getSecretProvider();
 				const modelApiKey = await secretProvider.getSecret('modelApiKey') ?? undefined;
-				const useOllama = workspaceSettings.get('useOllama') as boolean;
 				if (validModelConfig(modelEndpoint, modelName, modelVersion, modelApiKey)) {
 					const workspacePathPrefix = workspaceFsPath + "\\";
 					const configFilePath = workspacePathPrefix + DocuGenConstants.configFileName;
@@ -169,7 +168,7 @@ export function activate(context: vscode.ExtensionContext) {
 									const modelEndpoint = workspaceSettings.get('modelEndpoint') as string;
 									const modelName = workspaceSettings.get('modelName') as string;
 									const modelVersion = workspaceSettings.get('modelApiVersion') as string;
-									const useOllama = workspaceSettings.get('useOllama') as boolean;
+									const modelProvider = workspaceSettings.get('modelProvider') as ModelProviderEnums;
 									const documentationFilePath = workspacePathPrefix + sectionConfig.values.defaultDocumentFileName + defaultExtension;
 
 									const documentation = await new DocuGen(secretProvider)
@@ -182,7 +181,7 @@ export function activate(context: vscode.ExtensionContext) {
 											modelEndpoint,
 											modelName,
 											modelVersion,
-											useOllama
+											modelProvider
 										);
 
 									await writeToFile(documentation, documentationFilePath);
@@ -266,7 +265,7 @@ export function excludeInvalidFilesAndFolder(files: string[]) {
 	return files.filter(
 		x =>
 			x !== undefined && x !== '' && !x.includes(DocuGenConstants.excludedItems)
-	)
+	);
 }
 
 function removeDuplicates(arr: string[]): string[] {
@@ -300,21 +299,30 @@ function getFileIcon(extension: string): string {
 
 // Function to get all directories and files recursively 
 function getItemsRecursively(excludedItems: string[], source: string, parent: string = ''): string[] {
-	let itemsList: string[] = [];
-
 	try {
 		const items = fs.readdirSync(source);
-		const filteredItems = removeDuplicates(items.filter(x => !excludedItems.includes(x)));
-		for (const item of filteredItems) {
-			// Exclude items starting with a dot ('.')
-			if (
-				!/^[A-Za-z0-9].*/.test(item) ||
-				item.startsWith('.') ||
-				item.startsWith('_')
-			) {
-				continue; // Skip items not starting with an alphabet or valid number
-			}
 
+		const filteredItems = removeDuplicates(items.filter(x => !excludedItems.includes(x)));
+
+		return validateFiles(filteredItems, excludedItems, source, parent);
+	} catch (err) {
+		vscode.window.showErrorMessage(`Error reading directories: ${err}`);
+	}
+}
+
+function validateFiles(filteredItems: string[], excludedItems: string[], source: string, parent: string): string[] {
+
+	let itemsList: string[] = [];
+	for (const item of filteredItems) {
+		// Exclude items starting with a dot ('.')
+		if (
+			!/^[A-Za-z0-9].*/.test(item) ||
+			item.startsWith('.') ||
+			item.startsWith('_')
+		) {
+			continue; // Skip items not starting with an alphabet or valid number
+		}
+		try {
 			const fullPath = path.join(source, item);
 			const relativePath = path.join(parent, item);
 
@@ -337,8 +345,9 @@ function getItemsRecursively(excludedItems: string[], source: string, parent: st
 				}
 			}
 		}
-	} catch (err) {
-		vscode.window.showErrorMessage(`Error reading directories: ${err}`);
+		catch (error) {
+			continue;
+		}
 	}
 
 	return itemsList;
