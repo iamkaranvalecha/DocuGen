@@ -1,3 +1,4 @@
+import { ModelProviderEnums } from './enums';
 import { ISecretProvider } from './providers/ISecretProvider';
 import axios from "axios";
 
@@ -8,14 +9,17 @@ export class Providers {
     this.secretProvider = secretProvider;
   }
 
-  async sendRequestToModel(prompt: string, content: string, useOllama: boolean, modelEndpoint: string, modelName: string, modelVersion: string) {
-    if (useOllama) {
-      return this.useOllama(prompt, content, modelEndpoint, modelName, modelVersion);
-    }
-    else {
-      return this.useAzureOpenAI(prompt, content, modelEndpoint, modelName, modelVersion);
+  async sendRequestToModel(prompt: string, content: string, modelProvider: ModelProviderEnums, modelEndpoint: string, modelName: string, modelVersion: string) {
+    switch (modelProvider) {
+      case ModelProviderEnums.Ollama:
+        return this.useOllama(prompt, content, modelEndpoint, modelName, modelVersion);
+      case ModelProviderEnums.AzureOpenAI:
+        return this.useAzureOpenAI(prompt, content, modelEndpoint, modelName, modelVersion);
+      default:
+        throw new Error(`Unsupported model provider: ${modelProvider}`);
     }
   }
+
 
   /**
    * Use Ollama Compliant API to generate summary

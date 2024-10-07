@@ -4,6 +4,7 @@ import { ISecretProvider } from './providers/ISecretProvider';
 import { FileSection } from './models/FileSection';
 import { Constants } from './constants';
 import { Providers } from './providers';
+import { ModelProviderEnums } from './enums';
 
 export class DocuGen {
   private ISecretProvider: ISecretProvider;
@@ -20,22 +21,25 @@ export class DocuGen {
     workspacePath: string,
     excludeItemsFilePaths: string[],
     excludeExtensionsFilePaths: string[],
-    itemsToBeIncludedFilePaths: string[] = [],
+    itemsToBeIncludedFilePaths: string[],
     documentationFilePath: string,
     modelEndpoint: string,
     modelName: string,
     modelVersion: string,
-    useOllama: boolean): Promise<string> {
+    modelProvider: ModelProviderEnums): Promise<string> {
     try {
       console.log('Scanning repository:', workspacePath);
       const fileExists = await this.checkIfFileExists(workspacePath, documentationFilePath);
       console.log('Document file exists:', fileExists);
       let documentation = '';
       if (fileExists === false && itemsToBeIncludedFilePaths !== undefined && itemsToBeIncludedFilePaths.length > 0) {
-        documentation = await this.generateDocumentationForFiles(workspacePath, itemsToBeIncludedFilePaths, useOllama, modelEndpoint, modelName, modelVersion);
+        documentation = await this.generateDocumentationForFiles(workspacePath, itemsToBeIncludedFilePaths, modelProvider, modelEndpoint, modelName, modelVersion);
       }
       else if (itemsToBeIncludedFilePaths !== undefined && itemsToBeIncludedFilePaths.length > 0) {
-        documentation = await this.updateExistingDocumentation(workspacePath, documentationFilePath, excludeExtensionsFilePaths, itemsToBeIncludedFilePaths, useOllama, modelEndpoint, modelName, modelVersion);
+        documentation = await this.updateExistingDocumentation(workspacePath, documentationFilePath, excludeExtensionsFilePaths, itemsToBeIncludedFilePaths, modelProvider, modelEndpoint, modelName, modelVersion);
+      }
+      else{
+        throw new Error("No files to be included in documentation.");
       }
       else{
         throw new Error("No files to be included in documentation.");
@@ -54,7 +58,7 @@ export class DocuGen {
     }
   }
 
-  private async updateExistingDocumentation(workspacePath: string, documentationFilePath: string, excludeExtensionsFilePaths: string[], itemsToBeIncludedFilePaths: string[], useOllama: boolean, modelEndpoint: string, modelName: string, modelVersion: string) {
+  private async updateExistingDocumentation(workspacePath: string, documentationFilePath: string, excludeExtensionsFilePaths: string[], itemsToBeIncludedFilePaths: string[], modelProvider: ModelProviderEnums, modelEndpoint: string, modelName: string, modelVersion: string) {
     // Read the file & split in sections based on '### File:' format
     let fileContent = await this.readDocumentationFileContent(workspacePath, documentationFilePath);
     if (!fileContent) {
@@ -122,7 +126,7 @@ export class DocuGen {
           if (originalFileContent.length > 0) {
             let updatedContent = '';
             try {
-              updatedContent = await new Providers(this.ISecretProvider).sendRequestToModel(this.getSummaryPrompt(), originalFileContent, useOllama, modelEndpoint, modelName, modelVersion);
+              updatedContent = await new Providers(this.ISecretProvider).sendRequestToModel(this.getSummaryPrompt(), originalFileContent, modelProvider, modelEndpoint, modelName, modelVersion);
             }
             catch (error) {
               console.log(error);
@@ -210,7 +214,7 @@ export class DocuGen {
     }
   }
 
-  private async generateDocumentationForFiles(workspacePath: string, files: string[], useOllama: boolean, modelEndpoint: string, modelName: string, modelVersion: string): Promise<string> {
+  private async generateDocumentationForFiles(workspacePath: string, files: string[], modelProvider: ModelProviderEnums, modelEndpoint: string, modelName: string, modelVersion: string): Promise<string> {
     let fileDocumentation = Constants.fileTitle;
     console.log('Generating documentation for files:', files);
     for (const file of this.excludeInvalidFiles(files)) {
@@ -221,7 +225,7 @@ export class DocuGen {
 
         console.log('file content:', document);
         // Generate a summary for each file's content
-        const summary = await new Providers(this.ISecretProvider).sendRequestToModel(this.getSummaryPrompt(), document, useOllama, modelEndpoint, modelName, modelVersion);
+        const summary = await new Providers(this.ISecretProvider).sendRequestToModel(this.getSummaryPrompt(), document, modelProvider, modelEndpoint, modelName, modelVersion);
 
         console.log('Summary generated')
         fileDocumentation += this.formContentInFormat(file, summary);
