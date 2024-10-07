@@ -12,10 +12,10 @@ try {
     const sourceDir = path.join(libraryPath, 'dist');
     console.log('Source directory - '+  sourceDir);
 
-    let targetDir = __dirname += '\\scripts';
+    let targetDir = __dirname += '\\Resources\\scripts';
     console.log('Target directory - '+  targetDir);
 
-    let projectFilePath = __dirname.replace('scripts','\Docugen.csproj'); // Adjust this path to your project file
+    let projectFilePath = __dirname.replace('Resources\\scripts','DocuGen-CommunityToolkit.csproj'); // Adjust this path to your project file
     console.log('Project file path - '+  projectFilePath);
 
     execSync(`npm install && npm run build-tsc`, {cwd: libraryPath, stdio: 'inherit' });
@@ -64,7 +64,7 @@ try {
 
         /// Extract existing file entries to check for duplicates
         const existingEntries = new Set();
-        const regex = /<None CopyToOutputDirectory="Always" Include="([^"]+)" \/>/g;
+        const regex = /<Content CopyToOutputDirectory="Always" Include="([^"]+)">/g;
         let match;
         while ((match = regex.exec(projectFileContent)) !== null) {
             existingEntries.add(match[1].trim());
@@ -73,9 +73,11 @@ try {
         // Create the new file entries
         let newEntries = files
             .filter(file => path.extname(file) === '.js') // Adjust the extension as necessary
-            .map(file => path.relative(currentDir, path.join('scripts', file)))
+            .map(file => path.relative(currentDir, path.join('Resources','scripts', file)))
             .filter(relativePath => !existingEntries.has(relativePath)) // Check if already included
-            .map(file => `    <None CopyToOutputDirectory="Always" Include="${file}" />\n`)
+            .map(file => `<Content CopyToOutputDirectory="Always" Include="${file}">
+                <IncludeInVSIX>true</IncludeInVSIX>
+            </Content>\n`)
             .join('');
 
         if (newEntries) {

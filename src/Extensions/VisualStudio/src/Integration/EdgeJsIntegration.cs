@@ -1,39 +1,19 @@
 ﻿using EdgeJs;
 using Newtonsoft.Json;
-using System;
+using System.IO;
+using System.Reflection;
 using System.Threading.Tasks;
 
-namespace DocuGen.Integration
+namespace DocuGen_CommunityToolkit.Integration
 {
     public class EdgeJsIntegration
     {
-        private Func<object, Task<object>> _jsFunction;
-
-        public EdgeJsIntegration()
+        private string GetExtensionPath()
         {
-            var edge = Edge.Func(@"
-                return function (input, callback) {
-                    var module = require('./scripts/index.js');
-                    var result = {
-                        DocuGen: module.DocuGen,
-                        Providers: module.Providers,
-                        Constants: module.Constants,
-                        Enums: module.Enums,
-                        SettingEnums: module.SettingEnums,
-                        SectionConfig: module.SectionConfig,
-                        ISecretProvider: module.ISecretProvider
-                    };
-                    callback(null, JSON.stringify(result));
-                }
-            ");
-
-            _jsFunction = edge;
-        }
-
-        public async Task<TypeScriptTypes> GetTypesAsync()
-        {
-            var result = await _jsFunction(null);
-            return JsonConvert.DeserializeObject<TypeScriptTypes>(result.ToString());
+            // Get the current assembly location
+            var asm = Assembly.GetExecutingAssembly().Location;
+            
+            return Path.GetDirectoryName(asm);
         }
 
         public async Task<string> GenerateDocumentationAsync(string workspacePath,
@@ -44,11 +24,14 @@ namespace DocuGen.Integration
             string modelEndpoint,
             string modelName,
             string modelVersion,
-            bool useOllama)
+            string modelProvider)
         {
+
+            Edge.SetAssemblyDirectory(GetExtensionPath());
+
             var edge = Edge.Func(@"
                 return function (input, callback) {
-                    var module = require('./scripts/index.js');
+                    var module = require('/scripts/index.js');
                     var docuGen = new module.DocuGen();
                     docuGen.generateDocumentation(
                         input.workspacePath,
@@ -59,7 +42,7 @@ namespace DocuGen.Integration
                         input.modelEndpoint,
                         input.modelName,
                         input.modelVersion,
-                        input.useOllama
+                        input.modelProvider
                     ).then(result => {
                         callback(null, result);
                     }).catch(error => {
@@ -78,7 +61,7 @@ namespace DocuGen.Integration
                 modelEndpoint,
                 modelName,
                 modelVersion,
-                useOllama
+                modelProvider
             };
 
             var result = await edge(input);
@@ -104,9 +87,9 @@ namespace DocuGen.Integration
             // Define enum properties based on your TypeScript Enums type
         }
 
-        public class SettingEnums
+        public class ModelProviderEnums
         {
-            // Define enum properties based on your TypeScript SettingEnums type
+            // Define enum properties based on your TypeScript ModelProviderEnums type
         }
 
         public class SectionConfig
@@ -130,7 +113,7 @@ namespace DocuGen.Integration
             string modelEndpoint,
             string modelName,
             string modelVersion,
-            bool useOllama)
+            string modelProvider)
         {
             return await bridge.GenerateDocumentationAsync(workspacePath,
                 excludeItemsFilePaths,
@@ -140,7 +123,8 @@ namespace DocuGen.Integration
                 modelEndpoint,
                 modelName,
                 modelVersion,
-                useOllama);
+                modelProvider);
         }
     }
 }
+

@@ -44,8 +44,8 @@ class DocuGen {
         }
         this.ISecretProvider = ISecretProvider;
     }
-    generateDocumentation(workspacePath, excludeItemsFilePaths, excludeExtensionsFilePaths, itemsToBeIncludedFilePaths, documentationFilePath, modelEndpoint, modelName, modelVersion, useOllama) {
-        return __awaiter(this, void 0, void 0, function* () {
+    generateDocumentation(workspacePath_1, excludeItemsFilePaths_1, excludeExtensionsFilePaths_1) {
+        return __awaiter(this, arguments, void 0, function* (workspacePath, excludeItemsFilePaths, excludeExtensionsFilePaths, itemsToBeIncludedFilePaths = [], documentationFilePath, modelEndpoint, modelName, modelVersion, useOllama) {
             try {
                 console.log('Scanning repository:', workspacePath);
                 const fileExists = yield this.checkIfFileExists(workspacePath, documentationFilePath);
@@ -54,8 +54,11 @@ class DocuGen {
                 if (fileExists === false && itemsToBeIncludedFilePaths !== undefined && itemsToBeIncludedFilePaths.length > 0) {
                     documentation = yield this.generateDocumentationForFiles(workspacePath, itemsToBeIncludedFilePaths, useOllama, modelEndpoint, modelName, modelVersion);
                 }
-                else {
+                else if (itemsToBeIncludedFilePaths !== undefined && itemsToBeIncludedFilePaths.length > 0) {
                     documentation = yield this.updateExistingDocumentation(workspacePath, documentationFilePath, excludeExtensionsFilePaths, itemsToBeIncludedFilePaths, useOllama, modelEndpoint, modelName, modelVersion);
+                }
+                else {
+                    throw new Error("No files to be included in documentation.");
                 }
                 if (documentation.length > 0) {
                     return documentation;

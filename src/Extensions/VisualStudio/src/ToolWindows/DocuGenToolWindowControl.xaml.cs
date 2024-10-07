@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using DocuGen_CommunityToolkit.Integration;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
@@ -139,23 +140,20 @@ namespace DocuGen_CommunityToolkit
 
         private async void GenerateDocumentation_ClickAsync(object sender, RoutedEventArgs e)
         {
-            await VS.MessageBox.ShowAsync("DocuGenToolWindowControl", "Generate Button clicked");
-        }
-
-        private async void RefreshButton_ClickAsync(object sender, RoutedEventArgs e)
-        {
-            await GetFiles_Async();
-
-            await VS.MessageBox.ShowAsync("DocuGenToolWindowControl", "Refresh Button clicked");
+            await VS.MessageBox.ShowAsync("DocuGen", "Generate Button clicked");
         }
 
         private async void StageAll_ClickAsync(object sender, RoutedEventArgs e)
         {
+            await GetFiles_Async();
+
             StagedFilesTreeView.ItemsSource = AllFilesTreeView.Items;
 
-            AllFilesTreeView.ItemsSource = new ObservableCollection<FileSystemItem>();
+            var edgeJsIntegration = new EdgeJsIntegration();
+            var docuGen = new DocuGen();
+            var result = await docuGen.GenerateDocumentationAsync(edgeJsIntegration, "", "", "", "", "", "", "", "", "");
 
-            await VS.MessageBox.ShowAsync("DocuGenToolWindowControl", "Stage All Button clicked");
+            await VS.MessageBox.ShowAsync("DocuGen", result);
         }
     }
 }
