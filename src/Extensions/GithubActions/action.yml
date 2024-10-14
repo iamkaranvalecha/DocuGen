@@ -1,0 +1,67 @@
+name: 'DocuGen AI'
+description: 'Provide a description here'
+author: 'DocuGen AI'
+
+# Add your action's branding here. This will appear on the GitHub Marketplace.
+branding:
+  icon: 'heart'
+  color: 'red'
+
+# Define your inputs here.
+inputs:
+  api-key:
+    description: 'api-key'
+    required: true
+    default: ''
+  github-token:
+    description: 'GitHub token'
+    required: true
+  includedItems:
+    description:
+      'Mention file location along with file name with comma separated value'
+    required: false
+    default: ''
+    type: string
+  excludedItems:
+    description:
+      'Mention file location along with file name with comma separated value'
+    required: false
+    default: ''
+    type: string
+  uncheckedItems:
+    description:
+      'Mention file location along with file name with comma separated value'
+    required: false
+    default: ''
+    type: string
+  supportedExtensions:
+    description: 'Mention file extension with comma separated value'
+    required: false
+    default: ''
+    type: string
+  modelProvider:
+    description: 'Model Provider'
+    required: true
+    default: 'Azure OpenAI'
+    type: string
+  modelEndpoint:
+    description: 'Model Endpoint'
+    required: true
+    type: string
+  modelName:
+    description: 'Model Name'
+    required: true
+    type: string
+  modelVersion:
+    description: 'Model Version'
+    required: true
+    type: string
+
+# Define your outputs here.
+outputs:
+  time:
+    description: 'Your output description here'
+
+runs:
+  using: node20
+  main: dist/index.js #actions/
