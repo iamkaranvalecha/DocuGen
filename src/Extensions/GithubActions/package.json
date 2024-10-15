@@ -67,7 +67,7 @@
     "@actions/exec": "^1.1.1",
     "@actions/github": "^6.0.0",
     "@actions/io": "^1.1.3",
-    "docugen": "file:../../../Core"
+    "docugen": "file:../../Core"
   },
   "devDependencies": {
     "@jest/globals": "^29.7.0",
