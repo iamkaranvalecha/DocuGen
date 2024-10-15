@@ -142,3 +142,7 @@ node_modules
 .vscode/
 package-lock.json
 tsconfig.tsbuildinfo
+
+
+# Include specific dist folder
+!src/Extensions/GithubActions/dist
