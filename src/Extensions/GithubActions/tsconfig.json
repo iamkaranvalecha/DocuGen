@@ -20,5 +20,11 @@
     "src/**/*", // Include all files in actions/src
     "../../Core/src/**/*" // Include files from the core/src directory,
   ],
-  "exclude": ["./dist", "./node_modules", "./__tests__", "./coverage"]
+  "exclude": [
+    "./dist",
+    "./dist-action",
+    "./node_modules",
+    "./__tests__",
+    "./coverage"
+  ]
 }
