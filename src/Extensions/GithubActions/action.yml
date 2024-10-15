@@ -1,6 +1,6 @@
-name: 'DocuGen AI'
+name: 'DocuGen'
 description: 'Provide a description here'
-author: 'DocuGen AI'
+author: 'DocuGen'
 
 # Add your action's branding here. This will appear on the GitHub Marketplace.
 branding:
