@@ -64,4 +64,4 @@ outputs:
 
 runs:
   using: node20
-  main: dist/index.js #actions/
+  main: src/Extensions/GithubActions/dist/index.js
