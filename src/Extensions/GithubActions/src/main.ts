@@ -61,7 +61,7 @@ export async function run(): Promise<void> {
       const pullRequest = context.payload.pull_request
       const owner = context.repo.owner
       const repo = context.repo.repo
-      
+
       // Get the current working directory
       const workspaceFsPath = process.cwd()
       core.info(`Current working directory: ${workspaceFsPath}`)
@@ -109,8 +109,6 @@ export async function run(): Promise<void> {
             }
           }
 
-         
-
           sectionConfig.values.excludedItems = [
             sectionConfig.values.excludedItems,
             core.getInput('excludedItems')
@@ -131,7 +129,6 @@ export async function run(): Promise<void> {
           ]
             .filter(item => item && item.trim() !== '')
             .join(',')
-
 
           let uncheckedItems: string[] = []
           if (
@@ -189,7 +186,6 @@ export async function run(): Promise<void> {
           // Get all directories and files recursively
           const items = excludeInvalidExtensions(allFiles)
 
-
           let itemsToBeIncluded: string[] = items
             .filter(item => !uncheckedItems.includes(item))
             .filter(item => {
@@ -200,17 +196,14 @@ export async function run(): Promise<void> {
               )
             })
 
-
           // Update the configuration with the selected items
           itemsToBeIncluded = removeDuplicates(
             excludeInvalidExtensions(itemsToBeIncluded)
           )
 
-
           uncheckedItems = removeDuplicates(
             excludeInvalidExtensions(uncheckedItems)
           )
-
 
           excludedItems = removeDuplicates(
             excludeInvalidFilesAndFolder(excludedItems).concat(
@@ -218,13 +211,11 @@ export async function run(): Promise<void> {
             )
           )
 
-
           supportedExtensions = removeDuplicates(
             supportedExtensions.concat(
               DocuGenConstants.supportedExtensions.split(',')
             )
           )
-
 
           sectionConfig.values.includedItems = itemsToBeIncluded.join()
           sectionConfig.values.uncheckedItems = uncheckedItems.join()
@@ -263,8 +254,6 @@ export async function run(): Promise<void> {
           )
 
           await commitDocumentationChanges(documentationFilePath, documentation)
-
-
         }
       }
 
