@@ -1,0 +1,40 @@
+name: Continuous Integration
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+permissions:
+  pull-requests: write
+  contents: write
+  issues: write
+  actions: write
+
+jobs:
+  docugen:
+    name: DocuGen
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        id: checkout
+        uses: actions/checkout@v4
+
+      - name: Generate Documentation
+        id: docugen
+        uses: iamkaranvalecha/DocuGen@v1.0.0
+        with:
+          includedItems: '' #Optional
+          excludedItems: "" #Optional
+          uncheckedItems: "" #Optional
+          supportedExtensions: '' #Optional
+          modelProvider: "" #Mandatory [AzureOpenAI, Ollama]
+          modelEndpoint: "" #Mandatory
+          modelName: "" #Mandatory
+          modelVersion: "" #Mandatory
+          api-key: ${{ secrets.API_KEY }} #Mandatory
+          github-token: ${{ secrets.GITHUB_TOKEN }} #Mandatory
