@@ -44,5 +44,6 @@ const extensionConfig = {
   infrastructureLogging: {
     level: "log", // enables logging required for problem matchers
   },
+  ignoreWarnings: [/Can't resolve 'debug' in/]
 };
 module.exports = [ extensionConfig ];
