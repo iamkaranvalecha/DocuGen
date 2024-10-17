@@ -3,7 +3,7 @@
 	  "module": "commonjs",
 	  "target": "es6",
 	  "outDir": "./dist",
-	  "rootDir": "./src",
+	  "rootDir": "../../",
 	  "sourceMap": true,
 	  "strictPropertyInitialization": false,
 	  "declaration": false,
@@ -12,7 +12,10 @@
 	  "experimentalDecorators": true,
 	  "esModuleInterop": true
 	},
-	"include": ["src/**/*"],
+	"include": [
+		"src/**/*", // Include all files in actions/src
+		"../../Core/src/**/*" // Include files from the core/src directory,
+	],
 	"references": [
 		{ "path": "../../Core" }
 	],
