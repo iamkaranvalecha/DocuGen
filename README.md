@@ -39,3 +39,9 @@
 **👉 Join us on this exciting journey! We’d love your feedback and support.**
 
 **👉 Don’t forget to like, bookmark, and spread the word if you’re excited for automated documentation with DocuGen! 💡**
+
+### Example GitHub Actions Integration
+
+[View example configuration](examples/integration/github-actions.yml)
+
+This example demonstrates how to integrate using GitHub Actions.
