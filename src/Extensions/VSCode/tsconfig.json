@@ -19,5 +19,5 @@
 	"references": [
 		{ "path": "../../Core" }
 	],
-	"exclude": ["./node_modules/@types","node_modules", ".vscode-test", "_code-dep", "dist"],
+	"exclude": ["node_modules/**","../../Core/node_modules/**",".vscode-test", "_code-dep", "dist",],
 }
