@@ -1,8 +1,11 @@
-# 🚀 DocuGen: Your Code, Clearly Explained with AI 🚀
+# 🚀 DocuGen AI 🚀
 
-***A powerful Azure Open AI powered VS Code extension that scans your multiple repositories and generates clear, standardized, human-readable summarization of your code!***
+### *Shifting from Manual to Automated Documentation*
 
-**Perfect for developers, project managers, and new team members looking to understand complex code faster.**
+**Perfect for `developers`, `project managers`, and `new team members` looking to understand `business logic` faster**
+
+***A powerful AI powered VS Code extension that scans your repository and generates a `markdown` based documentation of your code!***
+
 
 ✨ Where did the idea come from?
 - Tired of messy, outdated & incomplete documentation
@@ -45,3 +48,7 @@
 [View example configuration](examples/integration/github-actions.yml)
 
 This example demonstrates how to integrate using GitHub Actions.
+
+### Visual Studio Code Extension
+
+[Install from Marketplace for VS Code](https://marketplace.visualstudio.com/items?itemName=DocuGenAI.docugenai)
