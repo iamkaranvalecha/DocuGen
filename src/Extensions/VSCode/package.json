@@ -3,15 +3,16 @@
   "publisher": "docugenai",
   "displayName": "DocuGen AI",
   "author": {
-    "name": "DocuGen"
+    "name": "DocuGen AI"
   },
   "description": "Shifting from manual to automated documentation",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "engines": {
     "vscode": "^1.92.0"
   },
   "categories": [
-    "AI"
+    "AI",
+    "Azure"
   ],
   "activationEvents": [],
   "main": "./dist/extension.js",
@@ -24,7 +25,7 @@
     ],
     "configuration": [
       {
-        "title": "DocuGen",
+        "title": "DocuGen AI",
         "scope": "resource",
         "properties": {
           "docugen.modelProvider": {
@@ -107,7 +108,7 @@
   },
   "dependencies": {
     "docugen": "file:../../Core",
-    "vsce": "^2.15.0"
+    "@vscode/vsce": "^2.15.0"
   },
   "repository": {
     "type": "git",
