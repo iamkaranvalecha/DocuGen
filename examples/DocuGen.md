@@ -1,171 +1,202 @@
 ### AI Generated Documentation using DocuGen
 ----
 ### File: CatalogItemService.cs
-# Code Summary: `CatalogItemService` Class
+## Summary
 
-## Overview
-This code snippet defines the `CatalogItemService` class, which is responsible for interacting with the Amazon Catalog Item API. The class provides several methods to list catalog items, retrieve catalog item details, and list catalog categories.
+### Class: `CatalogItemService`
 
-## Initialization
-The constructor initializes the `CatalogItemService` with `AmazonCredential`.
+This class manages interactions with Amazon's Catalog Items API. It extends from `RequestService` and requires `AmazonCredential` for authentication. The class includes deprecated methods and their newer replacements with versions for synchronous and asynchronous execution.
 
-### Constructor
+#### Constructor
 ```csharp
 public CatalogItemService(AmazonCredential amazonCredential) : base(amazonCredential)
-{
-}
 ```
+- **Purpose**: Initializes the `CatalogItemService` with the provided Amazon credentials.
+- **Parameters**: 
+  - `amazonCredential` (AmazonCredential): Required for authentication.
 
-#### Parameters
-- `amazonCredential`: Credential object for Amazon API authentication.
+---
 
-### Deprecated Methods
-Several methods are marked as deprecated, scheduled to be removed or replaced by newer versions after June 2022.
-
-## Methods
-
-### ListCatalogItems
-**Purpose**: Lists catalog items using specified parameters.
-
-#### Synchronous Method (Deprecated)
+### Method: `ListCatalogItems`
 ```csharp
+[Obsolete("This method deprecated in June 2022. Please use SearchCatalogItems202204 instead.", false)]
 public IList<Item> ListCatalogItems(ParameterListCatalogItems parameterListCatalogItems)
 ```
+- **Purpose**: Retrieves a list of catalog items based on provided parameters. Deprecated method.
+- **Parameters**: 
+  - `parameterListCatalogItems` (ParameterListCatalogItems): Contains filtering and pagination options.
+- **Returns**: 
+  - `IList<Item>`: List of catalog items.
 
-#### Asynchronous Method (Deprecated)
+#### Async Method: `ListCatalogItemsAsync`
 ```csharp
+[Obsolete("This method deprecated in June 2022. Please use SearchCatalogItems202204Async instead.", false)]
 public async Task<IList<Item>> ListCatalogItemsAsync(ParameterListCatalogItems parameterListCatalogItems)
-{
-    // Implementation details...
-}
 ```
+- **Purpose**: Asynchronous version of `ListCatalogItems`. Deprecated method.
+- **Parameters**: 
+  - `parameterListCatalogItems` (ParameterListCatalogItems): Contains filtering and pagination options.
+- **Returns**: 
+  - `Task<IList<Item>>`: List of catalog items (async).
 
-#### Parameters
-- `parameterListCatalogItems`: Parameters to filter the catalog items.
+- **Errors**: Throws `InvalidDataException` if all search parameters are null or empty.
 
-#### Error Handling
-- Throws `InvalidDataException` if key parameters are missing.
+---
 
-#### Returns
-- A list of `Item` objects.
-
-### GetCatalogItemJson
-**Purpose**: Retrieves catalog item details in JSON format.
-
-#### Synchronous Method
+### Method: `GetCatalogItemJson`
 ```csharp
 public String GetCatalogItemJson(string asin)
 ```
+- **Purpose**: Retrieves the catalog item details as a JSON string.
+- **Parameters**: 
+  - `asin` (string): Amazon Standard Identification Number (ASIN) of the item.
+- **Returns**: 
+  - `String`: JSON string of the catalog item details.
 
-#### Asynchronous Method
+#### Async Method: `GetCatalogItemAsyncJson`
 ```csharp
 public async Task<String> GetCatalogItemAsyncJson(string asin)
-{
-    // Implementation details...
-}
 ```
+- **Purpose**: Asynchronous version of `GetCatalogItemJson`.
+- **Parameters**: 
+  - `asin` (string): Amazon Standard Identification Number (ASIN) of the item.
+- **Returns**: 
+  - `Task<String>`: JSON string of the catalog item details (async).
 
-#### Parameters
-- `asin`: Amazon Standard Identification Number.
+- **Errors**: Throws `InvalidDataException` if `asin` is null or empty.
 
-#### Error Handling
-- Throws `InvalidDataException` if `asin` is null or empty.
+---
 
-#### Returns
-- JSON string containing catalog item details.
+### Method: `GetCatalogItem`
+```csharp
+[Obsolete("This method deprecated in June 2022. Please use GetCatalogItem(ParameterGetCatalogItem parameterListCatalogItem) instead.", true)]
+public Item GetCatalogItem(string asin)
+```
+- **Purpose**: Retrieves the catalog item based on ASIN. Deprecated method.
+- **Parameters**: 
+  - `asin` (string): Amazon Standard Identification Number (ASIN).
+- **Returns**: 
+  - `Item`: Catalog item object.
 
-### ListCatalogCategories
-**Purpose**: Lists catalog categories for a given ASIN, Seller SKU, and Marketplace ID.
+#### Async Method: `GetCatalogItemAsync`
+```csharp
+[Obsolete("This method deprecated in June 2022. Please use GetCatalogItem(ParameterGetCatalogItem parameterListCatalogItem) instead.", true)]
+public async Task<Item> GetCatalogItemAsync(string asin)
+```
+- **Purpose**: Asynchronous version of `GetCatalogItem`. Deprecated method.
+- **Parameters**: 
+  - `asin` (string): Amazon Standard Identification Number (ASIN).
+- **Returns**: 
+  - `Task<Item>`: Catalog item object (async).
 
-#### Synchronous Method
+- **Errors**: Throws `InvalidDataException` if `asin` is null or empty.
+
+---
+
+### Method: `ListCatalogCategories`
 ```csharp
 public IList<Categories> ListCatalogCategories(string ASIN, string SellerSKU = null, string MarketPlaceID = null)
 ```
+- **Purpose**: Lists categories for a catalog item.
+- **Parameters**: 
+  - `ASIN` (string): Amazon Standard Identification Number.
+  - `SellerSKU` (string, optional): Seller SKU.
+  - `MarketPlaceID` (string, optional): Marketplace ID.
+- **Returns**: 
+  - `IList<Categories>`: List of categories.
 
-#### Asynchronous Method
+#### Async Method: `ListCatalogCategoriesAsync`
 ```csharp
 public async Task<IList<Categories>> ListCatalogCategoriesAsync(string ASIN, string SellerSKU = null, string MarketPlaceID = null, CancellationToken cancellationToken = default)
-{
-    // Implementation details...
-}
 ```
+- **Purpose**: Asynchronous version of `ListCatalogCategories`.
+- **Parameters**:
+  - `ASIN` (string): Amazon Standard Identification Number.
+  - `SellerSKU` (string, optional): Seller SKU.
+  - `MarketPlaceID` (string, optional): Marketplace ID.
+  - `cancellationToken` (CancellationToken, optional): Token for operation cancellation.
+- **Returns**: 
+  - `Task<IList<Categories>>`: List of categories (async).
 
-#### Parameters
-- `ASIN`: Required. Amazon Standard Identification Number.
-- `SellerSKU`: Optional. Seller SKU.
-- `MarketPlaceID`: Optional. Marketplace ID.
+- **Errors**: Throws `InvalidDataException` if `ASIN` is null or empty.
 
-#### Error Handling
-- Throws `InvalidDataException` if `ASIN` is null or empty.
+---
 
-#### Returns
-- A list of `Categories` objects.
-
-### GetCatalogItem202204
-**Purpose**: Retrieves details for an item in the Amazon catalog for the 2022-04-01 API version.
-
-#### Synchronous Method
+### Method: `GetCatalogItem202204`
 ```csharp
 public AmazonSpApiSDK.Models.CatalogItems.V20220401.Item GetCatalogItem202204(ParameterGetCatalogItem parameterGetCatalogItem)
 ```
+- **Purpose**: Retrieves details for an item in the catalog using 2022 API.
+- **Parameters**: 
+  - `parameterGetCatalogItem` (ParameterGetCatalogItem): Parameters for the request.
+- **Returns**: 
+  - `Item`: Catalog item object.
 
-#### Asynchronous Method
+#### Async Method: `GetCatalogItem202204Async`
 ```csharp
 public async Task<AmazonSpApiSDK.Models.CatalogItems.V20220401.Item> GetCatalogItem202204Async(ParameterGetCatalogItem parameterGetCatalogItem, CancellationToken cancellationToken = default)
-{
-    // Implementation details...
-}
 ```
+- **Purpose**: Asynchronous version of `GetCatalogItem202204`.
+- **Parameters**:
+  - `parameterGetCatalogItem` (ParameterGetCatalogItem): Parameters for the request.
+  - `cancellationToken` (CancellationToken, optional): Token for operation cancellation.
+- **Returns**: 
+  - `Task<Item>`: Catalog item object (async).
 
-#### Parameters
-- `parameterGetCatalogItem`: Parameters to fetch catalog item details.
+- **Errors**: Throws `InvalidDataException` if `ASIN` is null or missing required properties.
 
-#### Error Handling
-- Throws `InvalidDataException` if `asin` or mandatory parameters are missing.
+---
 
-#### Returns
-- An `Item` object for the specified catalog item.
-
-### SearchCatalogItems202204
-**Purpose**: Searches catalog items based on specific filters and returns results for the 2022-04-01 API version.
-
-#### Synchronous Method
+### Method: `SearchCatalogItems202204`
 ```csharp
 public IList<AmazonSpApiSDK.Models.CatalogItems.V20220401.Item> SearchCatalogItems202204(ParameterSearchCatalogItems202204 parameterSearchCatalogItems)
 ```
+- **Purpose**: Searches catalog items using 2022 API.
+- **Parameters**: 
+  - `parameterSearchCatalogItems` (ParameterSearchCatalogItems202204): Search parameters.
+- **Returns**: 
+  - `IList<Item>`: List of catalog items.
 
-#### Asynchronous Method
+#### Async Method: `SearchCatalogItems202204Async`
 ```csharp
 public async Task<IList<AmazonSpApiSDK.Models.CatalogItems.V20220401.Item>> SearchCatalogItems202204Async(ParameterSearchCatalogItems202204 parameter, CancellationToken cancellationToken = default)
-{
-    // Implementation details...
-}
 ```
+- **Purpose**: Asynchronous version of `SearchCatalogItems202204`.
+- **Parameters**:
+  - `parameter` (ParameterSearchCatalogItems202204): Search parameters.
+  - `cancellationToken` (CancellationToken, optional): Token for operation cancellation.
+- **Returns**: 
+  - `Task<IList<Item>>`: List of catalog items (async).
 
-#### Parameters
-- `parameterSearchCatalogItems`: Parameters for searching catalog items.
+- **Errors**: Throws `InvalidDataException` if search parameters are invalid.
 
-#### Error Handling
-- Throws `InvalidDataException` for invalid filters or missing parameters.
+#### Private Async Method: `SearchCatalogItemsByNextToken202204Async`
+```csharp
+private async Task<ItemSearchResults> SearchCatalogItemsByNextToken202204Async(ParameterSearchCatalogItems202204 parameter, CancellationToken cancellationToken = default)
+```
+- **Purpose**: Handles paginated results for `SearchCatalogItems202204Async`.
+- **Parameters**:
+  - `parameter` (ParameterSearchCatalogItems202204): Search parameters with next token.
+  - `cancellationToken` (CancellationToken, optional): Token for operation cancellation.
+- **Returns**: 
+  - `Task<ItemSearchResults>`: Item search results for the next page (async).
 
-#### Returns
-- A list of `Item` objects based on search criteria.
+---
 
-## Dependencies
-- `FikaAmazonAPI`: External library for interaction with Amazon APIs.
-- `RestSharp`: Library for making HTTP requests.
-- Asynchronous programming using the `async` and `await` keywords.
+### Dependencies
+- **FikaAmazonAPI**: The namespace and its classes/methods are used for interacting with Amazon SP-API.
+- **`RestSharp`**: For making HTTP requests.
+- **`System.Threading.Tasks`**: For asynchronous method implementation.
 
-## Best Practices
-- Deprecation of methods is properly marked and documented.
-- Use of asynchronous methods for non-blocking operations.
-- Error handling via exceptions for missing or invalid input parameters.
+### Best Practices
+- **Error Handling**: Consistent use of `InvalidDataException` to handle invalid input.
+- **Deprecation**: Clearly marked deprecated methods with alternative recommendations.
+- **Asynchronous Programming**: Utilized `Task` and `async/await` for non-blocking operations.
 
-## Assumptions
-- The user is authenticated via `AmazonCredential`.
-- The methods interact with Amazon's Catalog API endpoints.
+### Sensitive Information
+- **AmazonCredential**: Make sure this contains sensitive API credentials and should be handled securely. Placeholder `[SECRET]` can be used when displaying such information.
 
-## Exclusion of Secrets
-- Any sensitive information such as API keys or tokens should be replaced with placeholders like `[SECRET]`.
+### Assumptions
+- **None**: The analysis strictly adheres to the content provided without assumptions.
 
 ----

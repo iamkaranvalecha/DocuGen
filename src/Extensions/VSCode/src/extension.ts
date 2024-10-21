@@ -23,7 +23,7 @@ export function activate(context: vscode.ExtensionContext) {
 				const secretProvider = getSecretProvider();
 				const modelApiKey = await secretProvider.getSecret('modelApiKey') ?? undefined;
 				if (validModelConfig(modelEndpoint, modelName, modelVersion, modelApiKey)) {
-					const workspacePathPrefix = workspaceFsPath + "\\";
+					const workspacePathPrefix = workspaceFsPath + path.sep;
 					const configFilePath = workspacePathPrefix + DocuGenConstants.configFileName;
 					let sectionConfig = new SectionConfig(
 						Enums.VSCode,
@@ -185,6 +185,11 @@ export function activate(context: vscode.ExtensionContext) {
 										);
 
 									await writeToFile(documentation, documentationFilePath);
+
+									sectionConfig.values.includedItems = "";
+									sectionConfig.values.uncheckedItems = removeDuplicates(sectionConfig.values.uncheckedItems.split(',').concat(itemsToBeIncluded)).join();
+
+									updateConfigFile(configFilePath, sectionConfig);
 
 									vscode.commands.executeCommand('vscode.open', vscode.Uri.file(documentationFilePath));
 
