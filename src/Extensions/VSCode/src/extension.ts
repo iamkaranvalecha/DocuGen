@@ -159,7 +159,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 							vscode.window.withProgress({
 								location: vscode.ProgressLocation.Notification,
-								title: "DocuGen: ",
+								title: "DocuGen AI: ",
 							}, async (progress, token) => {
 								try {
 									progress.report({ message: "Generating documentation for selected files..." });
@@ -214,27 +214,27 @@ export function deactivate() { }
 function validModelConfig(modelEndpoint: string, modelName: string, modelVersion: string, modelApiKey: string): boolean {
 	if (modelApiKey === undefined || modelApiKey === '') {
 		vscode.window.showErrorMessage("Please define model API key to generate documentation.");
-		vscode.commands.executeCommand('workbench.action.openSettings', extensionName + '.' + 'modelApiKey');
+		vscode.commands.executeCommand('workbench.action.openWorkspaceSettings', extensionName + '.' + 'modelApiKey');
 		return false;
 	}
 	if (modelEndpoint === undefined || modelEndpoint === '') {
 		vscode.window.showErrorMessage("Please define model endpoint to generate documentation.");
-		vscode.commands.executeCommand('workbench.action.openSettings', extensionName + '.' + 'modelEndpoint');
+		vscode.commands.executeCommand('workbench.action.openWorkspaceSettings', extensionName + '.' + 'modelEndpoint');
 		return false;
 	}
 	else if (!modelEndpoint.includes('https://')) {
 		vscode.window.showErrorMessage("Please define a valid model endpoint to generate documentation.");
-		vscode.commands.executeCommand('workbench.action.openSettings', extensionName + '.' + 'modelEndpoint');
+		vscode.commands.executeCommand('workbench.action.openWorkspaceSettings', extensionName + '.' + 'modelEndpoint');
 		return false;
 	}
 	if (modelName === undefined || modelName === '') {
 		vscode.window.showErrorMessage("Please define model name to generate documentation.");
-		vscode.commands.executeCommand('workbench.action.openSettings', extensionName + '.' + 'modelName');
+		vscode.commands.executeCommand('workbench.action.openWorkspaceSettings', extensionName + '.' + 'modelName');
 		return false;
 	}
 	if (modelVersion === undefined || modelVersion === '') {
 		vscode.window.showErrorMessage("Please define model version to generate documentation.");
-		vscode.commands.executeCommand('workbench.action.openSettings', extensionName + '.' + 'modelApiVersion');
+		vscode.commands.executeCommand('workbench.action.openWorkspaceSettings', extensionName + '.' + 'modelApiVersion');
 		return false;
 	}
 
