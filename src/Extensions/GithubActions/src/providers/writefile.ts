@@ -9,28 +9,20 @@ import { readConfigFile } from './utilities'
 import path from 'path'
 
 export async function commitDocumentationChanges(
-  filePath: string,
-  content: string
+  filePaths: string[]
 ) {
   try {
     configureGitAuthor()
 
     // Check if the file exists
-    if (!fs.existsSync(filePath)) {
-      // const currentContent = fs.readFileSync(filePath, 'utf-8')
-      await fs.promises.mkdir(path.dirname(filePath), { recursive: true })
-      // If the file already contains the desired content, skip the update
-      // if (currentContent === content) {
-      //   core.info('File already has the desired content. No changes needed.')
-      //   return
-      // }
+    for (var filePath in filePaths) {
+      // Check if the file exists
+      if (!fs.existsSync(filePath)) {
+        await fs.promises.mkdir(path.dirname(filePath), { recursive: true })
+      }
     }
 
-    // Write content to the file (overwrite or create if not exists)
-    fs.writeFileSync(filePath, content)
-    core.info(`File ${filePath} created/updated with content.`)
-
-    await addToGit(filePath)
+    await addToGit(filePaths)
 
     await pushToGit()
 
@@ -53,6 +45,12 @@ export async function commitDocumentationChanges(
   }
 }
 
+export function writeContentToFile(filePath: string, content: string) {
+  // Write content to the file (overwrite or create if not exists)
+  fs.writeFileSync(filePath, content)
+  core.info(`File ${filePath} created/updated with content.`)
+}
+
 async function configureGitAuthor() {
   await exec.exec('git', [
     'config',
@@ -67,7 +65,7 @@ export function writeConfigFile(filePath: string, sections: SectionConfig[]) {
   if (sections !== undefined && sections.length > 0) {
     fs.writeFileSync(filePath, JSON.stringify(sections, null, 2), 'utf-8')
     core.info(`File ${filePath} created/updated with content.`)
-    addToGit(filePath)
+    //addToGit(filePath)
   } else {
     throw new Error('Sections are undefined')
   }
@@ -90,9 +88,9 @@ export function updateConfigFile(filePath: string, section: SectionConfig) {
   }
 }
 
-async function addToGit(filePath: string) {
+async function addToGit(filePaths: string[]) {
   // Add the file to Git
-  await exec.exec('git', ['add', filePath])
+  await exec.exec('git', ['add', filePaths.join(' ')])
 }
 
 async function pushToGit() {
