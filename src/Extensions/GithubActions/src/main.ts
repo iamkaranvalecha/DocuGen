@@ -254,14 +254,21 @@ export async function run(): Promise<void> {
             modelProvider
           )
 
-          sectionConfig.values.includedItems = "";
-          sectionConfig.values.uncheckedItems = removeDuplicates(sectionConfig.values.uncheckedItems.split(',').concat(itemsToBeIncluded)).join();
+          sectionConfig.values.includedItems = ''
+          sectionConfig.values.uncheckedItems = removeDuplicates(
+            sectionConfig.values.uncheckedItems
+              .split(',')
+              .concat(itemsToBeIncluded)
+          ).join()
 
-          updateConfigFile(configFilePath, sectionConfig);
+          updateConfigFile(configFilePath, sectionConfig)
 
           writeContentToFile(documentationFilePath, documentation)
 
-          await commitDocumentationChanges([documentationFilePath, configFilePath])
+          await commitDocumentationChanges([
+            documentationFilePath,
+            configFilePath
+          ])
         }
       }
 
