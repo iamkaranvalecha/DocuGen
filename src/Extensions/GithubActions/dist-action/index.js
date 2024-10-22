@@ -32908,7 +32908,16 @@ async function run() {
                         sectionConfig.values.defaultDocumentFileName +
                         defaultExtension;
                     const documentation = await new docugen_1.DocuGen((0, providers_1.getSecretProvider)()).generateDocumentation(workspacePathPrefix, excludedItems, supportedExtensions, itemsToBeIncluded, documentationFilePath, modelEndpoint, modelName, modelVersion, modelProvider);
-                    await (0, writefile_1.commitDocumentationChanges)(documentationFilePath, documentation);
+                    sectionConfig.values.includedItems = '';
+                    sectionConfig.values.uncheckedItems = (0, providers_1.removeDuplicates)(sectionConfig.values.uncheckedItems
+                        .split(',')
+                        .concat(itemsToBeIncluded)).join();
+                    (0, writefile_1.updateConfigFile)(configFilePath, sectionConfig);
+                    (0, writefile_1.writeContentToFile)(documentationFilePath, documentation);
+                    await (0, writefile_1.commitDocumentationChanges)([
+                        documentationFilePath,
+                        configFilePath
+                    ]);
                 }
             }
             core.setOutput('time', 'Process completed on ' + new Date().toTimeString());
@@ -33398,6 +33407,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.commitDocumentationChanges = commitDocumentationChanges;
+exports.writeContentToFile = writeContentToFile;
 exports.writeConfigFile = writeConfigFile;
 exports.updateConfigFile = updateConfigFile;
 const core = __importStar(__nccwpck_require__(7484));
@@ -33408,23 +33418,17 @@ const docugen_1 = __nccwpck_require__(9053);
 const constant_1 = __nccwpck_require__(7232);
 const utilities_1 = __nccwpck_require__(7642);
 const path_1 = __importDefault(__nccwpck_require__(6928));
-async function commitDocumentationChanges(filePath, content) {
+async function commitDocumentationChanges(filePaths) {
     try {
         configureGitAuthor();
         // Check if the file exists
-        if (!fs.existsSync(filePath)) {
-            // const currentContent = fs.readFileSync(filePath, 'utf-8')
-            await fs.promises.mkdir(path_1.default.dirname(filePath), { recursive: true });
-            // If the file already contains the desired content, skip the update
-            // if (currentContent === content) {
-            //   core.info('File already has the desired content. No changes needed.')
-            //   return
-            // }
+        for (var filePath in filePaths) {
+            // Check if the file exists
+            if (!fs.existsSync(filePath)) {
+                await fs.promises.mkdir(path_1.default.dirname(filePath), { recursive: true });
+            }
         }
-        // Write content to the file (overwrite or create if not exists)
-        fs.writeFileSync(filePath, content);
-        core.info(`File ${filePath} created/updated with content.`);
-        await addToGit(filePath);
+        await addToGit(filePaths);
         await pushToGit();
         // Optionally, add a comment to the PR
         const token = core.getInput('github-token');
@@ -33443,6 +33447,11 @@ async function commitDocumentationChanges(filePath, content) {
         core.setFailed(error.message);
     }
 }
+function writeContentToFile(filePath, content) {
+    // Write content to the file (overwrite or create if not exists)
+    fs.writeFileSync(filePath, content);
+    core.info(`File ${filePath} created/updated with content.`);
+}
 async function configureGitAuthor() {
     await exec.exec('git', [
         'config',
@@ -33456,7 +33465,7 @@ function writeConfigFile(filePath, sections) {
     if (sections !== undefined && sections.length > 0) {
         fs.writeFileSync(filePath, JSON.stringify(sections, null, 2), 'utf-8');
         core.info(`File ${filePath} created/updated with content.`);
-        addToGit(filePath);
+        //addToGit(filePath)
     }
     else {
         throw new Error('Sections are undefined');
@@ -33477,9 +33486,9 @@ function updateConfigFile(filePath, section) {
         throw new Error('Section is undefined');
     }
 }
-async function addToGit(filePath) {
+async function addToGit(filePaths) {
     // Add the file to Git
-    await exec.exec('git', ['add', filePath]);
+    await exec.exec('git', ['add', filePaths.join(' ')]);
 }
 async function pushToGit() {
     // Commit the change
