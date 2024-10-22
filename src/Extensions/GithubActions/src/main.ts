@@ -17,6 +17,7 @@ import {
 } from './providers'
 import {
   commitDocumentationChanges,
+  writeContentToFile,
   updateConfigFile,
   writeConfigFile
 } from './providers/writefile'
@@ -253,7 +254,14 @@ export async function run(): Promise<void> {
             modelProvider
           )
 
-          await commitDocumentationChanges(documentationFilePath, documentation)
+          sectionConfig.values.includedItems = "";
+          sectionConfig.values.uncheckedItems = removeDuplicates(sectionConfig.values.uncheckedItems.split(',').concat(itemsToBeIncluded)).join();
+
+          updateConfigFile(configFilePath, sectionConfig);
+
+          writeContentToFile(documentationFilePath, documentation)
+
+          await commitDocumentationChanges([documentationFilePath, configFilePath])
         }
       }
 
