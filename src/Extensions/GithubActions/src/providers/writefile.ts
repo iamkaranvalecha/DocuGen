@@ -8,9 +8,7 @@ import { Constants } from './constant'
 import { readConfigFile } from './utilities'
 import path from 'path'
 
-export async function commitDocumentationChanges(
-  filePaths: string[]
-) {
+export async function commitDocumentationChanges(filePaths: string[]) {
   try {
     configureGitAuthor()
 
