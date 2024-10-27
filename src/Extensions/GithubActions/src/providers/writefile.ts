@@ -13,7 +13,7 @@ export async function commitDocumentationChanges(filePaths: string[]) {
     configureGitAuthor()
 
     // Check if the file exists
-    for (var filePath in filePaths) {
+    for (var filePath of filePaths) {
       // Check if the file exists
       if (!fs.existsSync(filePath)) {
         await fs.promises.mkdir(path.dirname(filePath), { recursive: true })
@@ -39,7 +39,7 @@ export async function commitDocumentationChanges(filePaths: string[]) {
 
     core.info('PR comment added.')
   } catch (error: any) {
-    core.setFailed(error.message)
+    core.setFailed(error instanceof Error ? error.message : String(error))
   }
 }
 
@@ -54,7 +54,7 @@ async function configureGitAuthor() {
     'config',
     '--global',
     'user.email',
-    '"you@example.com"'
+    '"DocuGenAI@outlook.com"'
   ])
   await exec.exec('git', ['config', '--global', 'user.name', '"Docugen"'])
 }
@@ -88,7 +88,8 @@ export function updateConfigFile(filePath: string, section: SectionConfig) {
 
 async function addToGit(filePaths: string[]) {
   // Add the file to Git
-  await exec.exec('git', ['add', filePaths.join(' ')])
+  await exec.exec('git status')
+  await exec.exec('git', ['add', ...filePaths])
 }
 
 async function pushToGit() {
