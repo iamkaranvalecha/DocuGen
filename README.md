@@ -6,7 +6,6 @@
 
 ***A powerful AI powered VS Code extension that scans your repository and generates a `markdown` based documentation of your code!***
 
-
 ✨ Where did the idea come from?
 - Tired of messy, outdated & incomplete documentation
 
