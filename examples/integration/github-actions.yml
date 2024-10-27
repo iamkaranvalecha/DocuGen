@@ -26,7 +26,7 @@ jobs:
 
       - name: Generate Documentation
         id: docugen
-        uses: iamkaranvalecha/DocuGen@v1.0.0
+        uses: iamkaranvalecha/DocuGen@latest
         with:
           includedItems: '' #Optional
           excludedItems: "" #Optional
@@ -35,6 +35,6 @@ jobs:
           modelProvider: "" #Mandatory [AzureOpenAI, Ollama]
           modelEndpoint: "" #Mandatory
           modelName: "" #Mandatory
-          modelVersion: "" #Mandatory
+          modelVersion: "" #Mandatory if using AzureOpenAI, when using ollama value can be set to ollama
           api-key: ${{ secrets.API_KEY }} #Mandatory
           github-token: ${{ secrets.GITHUB_TOKEN }} #Mandatory
