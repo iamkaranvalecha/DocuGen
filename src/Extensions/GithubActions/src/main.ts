@@ -187,15 +187,13 @@ export async function run(): Promise<void> {
           // Get all directories and files recursively
           const items = excludeInvalidExtensions(allFiles)
 
-          let itemsToBeIncluded: string[] = items
-            .filter(item => !uncheckedItems.includes(item))
-            .filter(item => {
-              const itemPath = path.normalize(item)
+          let itemsToBeIncluded: string[] = items.filter(item => {
+            const itemPath = path.normalize(item)
 
-              return !excludedItems.some(excludedItem =>
-                itemPath.startsWith(excludedItem + path.sep)
-              )
-            })
+            return !excludedItems.some(excludedItem =>
+              itemPath.startsWith(excludedItem + path.sep)
+            )
+          })
 
           // Update the configuration with the selected items
           itemsToBeIncluded = removeDuplicates(
@@ -237,6 +235,8 @@ export async function run(): Promise<void> {
           ) as ModelProviderEnums
           const documentationFilePath =
             sectionConfig.values.defaultDocumentFileName + defaultExtension
+          const workspaceDocumentationFilePath =
+            workspacePathPrefix + documentationFilePath
 
           const documentation = await new DocuGen(
             getSecretProvider()
@@ -261,7 +261,7 @@ export async function run(): Promise<void> {
 
           updateConfigFile(configFilePath, sectionConfig)
 
-          writeContentToFile(documentationFilePath, documentation)
+          writeContentToFile(workspaceDocumentationFilePath, documentation)
 
           await commitDocumentationChanges([
             documentationFilePath,
