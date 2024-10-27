@@ -56,7 +56,7 @@ async function configureGitAuthor() {
     'user.email',
     '"DocuGenAI@outlook.com"'
   ])
-  await exec.exec('git', ['config', '--global', 'user.name', '"Docugen"'])
+  await exec.exec('git', ['config', '--global', 'user.name', '"Docugen AI"'])
 }
 
 export function writeConfigFile(filePath: string, sections: SectionConfig[]) {
