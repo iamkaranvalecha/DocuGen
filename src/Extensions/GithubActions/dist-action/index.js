@@ -32339,6 +32339,7 @@ class DocuGen {
     }
     async generateDocumentation(workspacePath, excludeItemsFilePaths, excludeExtensionsFilePaths, itemsToBeIncludedFilePaths, documentationFilePath, modelEndpoint, modelName, modelVersion, modelProvider) {
         try {
+            console.log('logging paths workspacePath>', workspacePath, 'documentationFilePath>', documentationFilePath);
             console.log('Scanning repository:', workspacePath);
             const fileExists = await this.checkIfFileExists(workspacePath, documentationFilePath);
             console.log('Document file exists:', fileExists);
@@ -32494,6 +32495,7 @@ class DocuGen {
     async checkIfFileExists(workspaceFolder, filePath) {
         try {
             filePath = path.join(workspaceFolder, filePath);
+            console.log(filePath);
             await fs.promises.readFile(filePath.trim());
             return true;
         }
@@ -32904,9 +32906,9 @@ async function run() {
                     const modelName = core.getInput('modelName');
                     const modelVersion = core.getInput('modelVersion');
                     const modelProvider = core.getInput('modelProvider');
-                    const documentationFilePath = workspacePathPrefix +
-                        sectionConfig.values.defaultDocumentFileName +
-                        defaultExtension;
+                    const documentationFilePath = 
+                    // workspacePathPrefix +
+                    sectionConfig.values.defaultDocumentFileName + defaultExtension;
                     const documentation = await new docugen_1.DocuGen((0, providers_1.getSecretProvider)()).generateDocumentation(workspacePathPrefix, excludedItems, supportedExtensions, itemsToBeIncluded, documentationFilePath, modelEndpoint, modelName, modelVersion, modelProvider);
                     sectionConfig.values.includedItems = '';
                     sectionConfig.values.uncheckedItems = (0, providers_1.removeDuplicates)(sectionConfig.values.uncheckedItems
@@ -33422,7 +33424,7 @@ async function commitDocumentationChanges(filePaths) {
     try {
         configureGitAuthor();
         // Check if the file exists
-        for (var filePath in filePaths) {
+        for (var filePath of filePaths) {
             // Check if the file exists
             if (!fs.existsSync(filePath)) {
                 await fs.promises.mkdir(path_1.default.dirname(filePath), { recursive: true });
@@ -33444,7 +33446,7 @@ async function commitDocumentationChanges(filePaths) {
         core.info('PR comment added.');
     }
     catch (error) {
-        core.setFailed(error.message);
+        core.setFailed(error instanceof Error ? error.message : String(error));
     }
 }
 function writeContentToFile(filePath, content) {
@@ -33457,7 +33459,7 @@ async function configureGitAuthor() {
         'config',
         '--global',
         'user.email',
-        '"you@example.com"'
+        '"DocuGenAI@outlook.com"'
     ]);
     await exec.exec('git', ['config', '--global', 'user.name', '"Docugen"']);
 }
@@ -33488,7 +33490,8 @@ function updateConfigFile(filePath, section) {
 }
 async function addToGit(filePaths) {
     // Add the file to Git
-    await exec.exec('git', ['add', filePaths.join(' ')]);
+    await exec.exec('git status');
+    await exec.exec('git', ['add', ...filePaths]);
 }
 async function pushToGit() {
     // Commit the change

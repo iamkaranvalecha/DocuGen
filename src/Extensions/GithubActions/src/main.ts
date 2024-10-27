@@ -236,9 +236,7 @@ export async function run(): Promise<void> {
             'modelProvider'
           ) as ModelProviderEnums
           const documentationFilePath =
-            workspacePathPrefix +
-            sectionConfig.values.defaultDocumentFileName +
-            defaultExtension
+            sectionConfig.values.defaultDocumentFileName + defaultExtension
 
           const documentation = await new DocuGen(
             getSecretProvider()
