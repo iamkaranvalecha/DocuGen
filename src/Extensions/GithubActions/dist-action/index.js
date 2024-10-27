@@ -32339,7 +32339,6 @@ class DocuGen {
     }
     async generateDocumentation(workspacePath, excludeItemsFilePaths, excludeExtensionsFilePaths, itemsToBeIncludedFilePaths, documentationFilePath, modelEndpoint, modelName, modelVersion, modelProvider) {
         try {
-            console.log('logging paths workspacePath>', workspacePath, 'documentationFilePath>', documentationFilePath);
             console.log('Scanning repository:', workspacePath);
             const fileExists = await this.checkIfFileExists(workspacePath, documentationFilePath);
             console.log('Document file exists:', fileExists);
@@ -32495,7 +32494,6 @@ class DocuGen {
     async checkIfFileExists(workspaceFolder, filePath) {
         try {
             filePath = path.join(workspaceFolder, filePath);
-            console.log(filePath);
             await fs.promises.readFile(filePath.trim());
             return true;
         }
@@ -32885,9 +32883,7 @@ async function run() {
                     }
                     // Get all directories and files recursively
                     const items = (0, providers_1.excludeInvalidExtensions)(allFiles);
-                    let itemsToBeIncluded = items
-                        .filter(item => !uncheckedItems.includes(item))
-                        .filter(item => {
+                    let itemsToBeIncluded = items.filter(item => {
                         const itemPath = path_1.default.normalize(item);
                         return !excludedItems.some(excludedItem => itemPath.startsWith(excludedItem + path_1.default.sep));
                     });
@@ -32906,16 +32902,15 @@ async function run() {
                     const modelName = core.getInput('modelName');
                     const modelVersion = core.getInput('modelVersion');
                     const modelProvider = core.getInput('modelProvider');
-                    const documentationFilePath = 
-                    // workspacePathPrefix +
-                    sectionConfig.values.defaultDocumentFileName + defaultExtension;
+                    const documentationFilePath = sectionConfig.values.defaultDocumentFileName + defaultExtension;
+                    const workspaceDocumentationFilePath = workspacePathPrefix + documentationFilePath;
                     const documentation = await new docugen_1.DocuGen((0, providers_1.getSecretProvider)()).generateDocumentation(workspacePathPrefix, excludedItems, supportedExtensions, itemsToBeIncluded, documentationFilePath, modelEndpoint, modelName, modelVersion, modelProvider);
                     sectionConfig.values.includedItems = '';
                     sectionConfig.values.uncheckedItems = (0, providers_1.removeDuplicates)(sectionConfig.values.uncheckedItems
                         .split(',')
                         .concat(itemsToBeIncluded)).join();
                     (0, writefile_1.updateConfigFile)(configFilePath, sectionConfig);
-                    (0, writefile_1.writeContentToFile)(documentationFilePath, documentation);
+                    (0, writefile_1.writeContentToFile)(workspaceDocumentationFilePath, documentation);
                     await (0, writefile_1.commitDocumentationChanges)([
                         documentationFilePath,
                         configFilePath
@@ -33461,7 +33456,7 @@ async function configureGitAuthor() {
         'user.email',
         '"DocuGenAI@outlook.com"'
     ]);
-    await exec.exec('git', ['config', '--global', 'user.name', '"Docugen"']);
+    await exec.exec('git', ['config', '--global', 'user.name', '"Docugen AI"']);
 }
 function writeConfigFile(filePath, sections) {
     if (sections !== undefined && sections.length > 0) {
