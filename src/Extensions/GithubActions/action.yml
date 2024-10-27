@@ -64,4 +64,5 @@ outputs:
 
 runs:
   using: node20
-  main: src/Extensions/GithubActions/dist-action/index.js
+  main: src/Extensions/GithubActions/dist-action/index.js #Enable during final release
+  # main: dist-action/index.js  #enable during development
