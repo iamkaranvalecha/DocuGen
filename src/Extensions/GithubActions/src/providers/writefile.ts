@@ -8,29 +8,19 @@ import { Constants } from './constant'
 import { readConfigFile } from './utilities'
 import path from 'path'
 
-export async function commitDocumentationChanges(
-  filePath: string,
-  content: string
-) {
+export async function commitDocumentationChanges(filePaths: string[]) {
   try {
     configureGitAuthor()
 
     // Check if the file exists
-    if (!fs.existsSync(filePath)) {
-      // const currentContent = fs.readFileSync(filePath, 'utf-8')
-      await fs.promises.mkdir(path.dirname(filePath), { recursive: true })
-      // If the file already contains the desired content, skip the update
-      // if (currentContent === content) {
-      //   core.info('File already has the desired content. No changes needed.')
-      //   return
-      // }
+    for (var filePath of filePaths) {
+      // Check if the file exists
+      if (!fs.existsSync(filePath)) {
+        await fs.promises.mkdir(path.dirname(filePath), { recursive: true })
+      }
     }
 
-    // Write content to the file (overwrite or create if not exists)
-    fs.writeFileSync(filePath, content)
-    core.info(`File ${filePath} created/updated with content.`)
-
-    await addToGit(filePath)
+    await addToGit(filePaths)
 
     await pushToGit()
 
@@ -49,8 +39,14 @@ export async function commitDocumentationChanges(
 
     core.info('PR comment added.')
   } catch (error: any) {
-    core.setFailed(error.message)
+    core.setFailed(error instanceof Error ? error.message : String(error))
   }
+}
+
+export function writeContentToFile(filePath: string, content: string) {
+  // Write content to the file (overwrite or create if not exists)
+  fs.writeFileSync(filePath, content)
+  core.info(`File ${filePath} created/updated with content.`)
 }
 
 async function configureGitAuthor() {
@@ -58,16 +54,16 @@ async function configureGitAuthor() {
     'config',
     '--global',
     'user.email',
-    '"you@example.com"'
+    '"DocuGenAI@outlook.com"'
   ])
-  await exec.exec('git', ['config', '--global', 'user.name', '"Docugen"'])
+  await exec.exec('git', ['config', '--global', 'user.name', '"Docugen AI"'])
 }
 
 export function writeConfigFile(filePath: string, sections: SectionConfig[]) {
   if (sections !== undefined && sections.length > 0) {
     fs.writeFileSync(filePath, JSON.stringify(sections, null, 2), 'utf-8')
     core.info(`File ${filePath} created/updated with content.`)
-    addToGit(filePath)
+    //addToGit(filePath)
   } else {
     throw new Error('Sections are undefined')
   }
@@ -90,9 +86,10 @@ export function updateConfigFile(filePath: string, section: SectionConfig) {
   }
 }
 
-async function addToGit(filePath: string) {
+async function addToGit(filePaths: string[]) {
   // Add the file to Git
-  await exec.exec('git', ['add', filePath])
+  await exec.exec('git status')
+  await exec.exec('git', ['add', ...filePaths])
 }
 
 async function pushToGit() {

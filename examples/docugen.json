@@ -5,7 +5,7 @@
       "defaultDocumentFileName": "docugen",
       "includedItems": "",
       "excludedItems": "DocuGen,docugen.json,.git,.github,.semversioner,.vscode,.vs,node_modules,dist,build,.venv,bin,obj,.config,bower_components,out,target,coverage,.svn,.hg,.idea,Thumbsdb,.DS_Store,logs,test-reports",
-      "uncheckedItems": "create_graphrag_config.py,integration\\github-actions.yml,integration.spec.ts,karan.py,Logic.java,queue.yaml,RandomFiles\\randomQueue.yaml,test-api.spec.ts,todo-list.component.html,todo-list.component.ts,wow.cs,CatalogItemService.cs",
+      "uncheckedItems": "create_graphrag_config.py,integration\\github-actions.yml,integration.spec.ts,karan.py,queue.yaml,RandomFiles\\randomQueue.yaml,test-api.spec.ts,todo-list.component.html,todo-list.component.ts,wow.cs,CatalogItemService.cs,Logic.java",
       "supportedExtensions": ".js,.ts,.html,.css,.less,.scss,.vue,.jsx,.tsx,.py,.ipynb,.yaml,.yml,.java,.xml,.properties,.c,.cpp,.h,Makefile,.cs,.config,.rb,.gemspec,.gemfile,.rake,.php,.swift,.plist,.kt,.m,.bat,.ps1,Dockerfile,.tf"
     }
   }
