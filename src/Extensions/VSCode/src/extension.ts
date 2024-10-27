@@ -169,7 +169,8 @@ export function activate(context: vscode.ExtensionContext) {
 									const modelName = workspaceSettings.get('modelName') as string;
 									const modelVersion = workspaceSettings.get('modelApiVersion') as string;
 									const modelProvider = workspaceSettings.get('modelProvider') as ModelProviderEnums;
-									const documentationFilePath = workspacePathPrefix + sectionConfig.values.defaultDocumentFileName + defaultExtension;
+									const documentationFilePath = sectionConfig.values.defaultDocumentFileName + defaultExtension;
+									const workspaceDocumentationFilePath = workspacePathPrefix + documentationFilePath;
 
 									const documentation = await new DocuGen(secretProvider)
 										.generateDocumentation(
@@ -184,14 +185,14 @@ export function activate(context: vscode.ExtensionContext) {
 											modelProvider
 										);
 
-									await writeToFile(documentation, documentationFilePath);
+									await writeToFile(documentation, workspaceDocumentationFilePath);
 
 									sectionConfig.values.includedItems = "";
 									sectionConfig.values.uncheckedItems = removeDuplicates(sectionConfig.values.uncheckedItems.split(',').concat(itemsToBeIncluded)).join();
 
 									updateConfigFile(configFilePath, sectionConfig);
 
-									vscode.commands.executeCommand('vscode.open', vscode.Uri.file(documentationFilePath));
+									vscode.commands.executeCommand('vscode.open', vscode.Uri.file(workspaceDocumentationFilePath));
 
 									progress.report({ message: "Please verify the documentation" });
 
