@@ -43,7 +43,7 @@
           "docugen.modelName": {
             "type": "string",
             "description": "Model name. (example: gpt-4o)",
-            "default": "gpt-4o",
+            "default": "",
             "title": "Model Name",
             "workspace": true,
             "scope": "resource"
@@ -51,7 +51,7 @@
           "docugen.modelEndpoint": {
             "type": "string",
             "description": "Azure OpenAI model endpoint. (example: https://<instance>.openai.azure.com)",
-            "default": "https://vsmodel.openai.azure.com",
+            "default": "",
             "title": "Model Endpoint",
             "workspace": true,
             "scope": "resource"
@@ -59,7 +59,7 @@
           "docugen.modelApiVersion": {
             "type": "string",
             "description": "Model API Version (example: 2023-03-15-preview)",
-            "default": "2023-03-15-preview",
+            "default": "",
             "title": "API version",
             "workspace": true,
             "scope": "resource"
