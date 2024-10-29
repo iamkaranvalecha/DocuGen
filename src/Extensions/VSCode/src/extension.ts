@@ -69,7 +69,7 @@ export function activate(context: vscode.ExtensionContext) {
 						supportedExtensions = getSupportedExtensions();
 					}
 
-					const allFiles = getItemsRecursively(excludedItems, workspaceFsPath);
+					const allFiles = getItemsRecursively(excludedItems, workspaceFsPath, supportedExtensions);
 					if (allFiles.includes('.gitignore')) {
 						getGitIgnoreItems(workspaceFsPath, excludedItems);
 					}
@@ -304,19 +304,19 @@ function getFileIcon(extension: string): string {
 }
 
 // Function to get all directories and files recursively 
-function getItemsRecursively(excludedItems: string[], source: string, parent: string = ''): string[] {
+function getItemsRecursively(excludedItems: string[], source: string, supportedExtensions: string[], parent: string = ''): string[] {
 	try {
 		const items = fs.readdirSync(source);
 
 		const filteredItems = removeDuplicates(items.filter(x => !excludedItems.includes(x)));
 
-		return validateFiles(filteredItems, excludedItems, source, parent);
+		return validateFiles(filteredItems, excludedItems, source, supportedExtensions, parent);
 	} catch (err) {
 		vscode.window.showErrorMessage(`Error reading directories: ${err}`);
 	}
 }
 
-function validateFiles(filteredItems: string[], excludedItems: string[], source: string, parent: string): string[] {
+function validateFiles(filteredItems: string[], excludedItems: string[], source: string, supportedExtensions: string[], parent: string): string[] {
 
 	let itemsList: string[] = [];
 	for (const item of filteredItems) {
@@ -337,13 +337,13 @@ function validateFiles(filteredItems: string[], excludedItems: string[], source:
 				itemsList.push(relativePath);
 
 				// Recursively get subdirectories and files 
-				itemsList = itemsList.concat(getItemsRecursively(excludedItems, fullPath, relativePath));
+				itemsList = itemsList.concat(getItemsRecursively(excludedItems, fullPath, supportedExtensions, relativePath));
 			} else {
 				// Add the file to the list
 				const ext = path.extname(item).toLowerCase();
 				if (ext.length > 0) {
 					// Exclude non-standard file types
-					const isSupported = isSupportedExtFile(ext);
+					const isSupported = isSupportedExtFile(supportedExtensions, ext);
 					if (isSupported === true) {
 						// Add the file to the list 
 						itemsList.push(relativePath);
@@ -464,8 +464,8 @@ function getSupportedExtensions(supportedExtensions: string[] = DocuGenConstants
 }
 
 // Function to determine if a file extension should be excluded
-function isSupportedExtFile(extension: string): boolean {
-	return getSupportedExtensions().includes(extension);
+function isSupportedExtFile(supportedExtensions: string[], extension: string): boolean {
+	return getSupportedExtensions(supportedExtensions).includes(extension);
 }
 
 function getSecretProvider() {
