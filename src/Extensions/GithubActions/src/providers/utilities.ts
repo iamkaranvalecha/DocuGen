@@ -89,6 +89,7 @@ export function getItemsRecursively(
   source: string,
   isInitialRun: boolean,
   changedFiles: string[],
+  supportedExtensions: string[],
   parent: string = ''
 ): string[] {
   try {
@@ -104,7 +105,8 @@ export function getItemsRecursively(
       source,
       parent,
       isInitialRun,
-      changedFiles
+      changedFiles,
+      supportedExtensions
     )
   } catch (err) {
     throw Error(`Error reading directories: ${err}`)
@@ -117,7 +119,8 @@ function validateFiles(
   source: string,
   parent: string,
   isInitialRun: boolean,
-  changedFiles: string[]
+  changedFiles: string[],
+  supportedExtensions: string[]
 ): string[] {
   let itemsList: string[] = []
   for (const item of filteredItems) {
@@ -144,7 +147,8 @@ function validateFiles(
             fullPath,
             isInitialRun,
             changedFiles,
-            relativePath
+            supportedExtensions,
+            relativePath,
           )
         )
       } else {
@@ -152,7 +156,7 @@ function validateFiles(
         const ext = path.extname(item).toLowerCase()
         if (ext.length > 0) {
           // Exclude non-standard file types
-          const isSupported = isSupportedExtFile(ext)
+          const isSupported = isSupportedExtFile(supportedExtensions, ext)
           if (isSupported === true) {
             // Add the file to the list
             itemsList.push(relativePath)
@@ -200,8 +204,8 @@ export function getGitIgnoreItems(
 }
 
 // Function to determine if a file extension should be excluded
-function isSupportedExtFile(extension: string): boolean {
-  return getSupportedExtensions().includes(extension)
+function isSupportedExtFile(supportedExtensions: string[], extension: string): boolean {
+  return getSupportedExtensions(supportedExtensions).includes(extension)
 }
 
 export function getSecretProvider() {
