@@ -177,7 +177,8 @@ export async function run(): Promise<void> {
             excludedItems,
             workspaceFsPath,
             isInitialRun,
-            changedFiles
+            changedFiles,
+            supportedExtensions
           )
 
           if (allFiles.includes('.gitignore')) {
