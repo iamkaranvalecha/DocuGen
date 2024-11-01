@@ -19,14 +19,18 @@ import {
   commitDocumentationChanges,
   writeContentToFile,
   updateConfigFile,
-  writeConfigFile
+  writeConfigFile,
+  writeFileSync,
+  appendToTempFile,
+  deleteTempFile
 } from './providers/writefile'
 import {
   DocuGen,
   Constants as DocuGenConstants,
   Enums,
   SectionConfig,
-  ModelProviderEnums
+  ModelProviderEnums,
+  FileContentProvider
 } from 'docugen'
 import path from 'path'
 import { Constants } from './providers/constant'
@@ -239,19 +243,37 @@ export async function run(): Promise<void> {
           const workspaceDocumentationFilePath =
             workspacePathPrefix + documentationFilePath
 
-          const documentation = await new DocuGen(
-            getSecretProvider()
-          ).generateDocumentation(
-            workspacePathPrefix,
-            excludedItems,
-            supportedExtensions,
-            itemsToBeIncluded,
-            documentationFilePath,
-            modelEndpoint,
-            modelName,
-            modelVersion,
-            modelProvider
+          const tempFilePath = workspacePathPrefix + 'docugen-temp.md'
+          writeFileSync(tempFilePath, '')
+
+          const docuGen = new DocuGen(getSecretProvider())
+          const chunkFilePaths: string[] = []
+
+          for (const file of itemsToBeIncluded) {
+            for await (const chunk of docuGen.generateDocumentation(
+              workspacePathPrefix,
+              excludedItems,
+              [file],
+              modelEndpoint,
+              modelName,
+              modelVersion,
+              modelProvider
+            )) {
+              if (chunk.content) {
+                await appendToTempFile(tempFilePath, chunk.content)
+              }
+              chunkFilePaths.push(chunk.filePath)
+            }
+          }
+
+          const fileContentProvider = new FileContentProvider()
+          await fileContentProvider.updateFileContent(
+            workspaceDocumentationFilePath,
+            tempFilePath,
+            chunkFilePaths
           )
+
+          await deleteTempFile(tempFilePath)
 
           sectionConfig.values.includedItems = ''
           sectionConfig.values.uncheckedItems = removeDuplicates(
@@ -261,8 +283,6 @@ export async function run(): Promise<void> {
           ).join()
 
           updateConfigFile(configFilePath, sectionConfig)
-
-          writeContentToFile(workspaceDocumentationFilePath, documentation)
 
           await commitDocumentationChanges([
             documentationFilePath,
