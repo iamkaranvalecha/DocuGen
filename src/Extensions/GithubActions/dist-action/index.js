@@ -32282,6 +32282,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Constants = void 0;
 exports.Constants = {
     extensionName: "DocuGen",
+    extensionTagLine: "Shifting from Manual to Automated Documentation",
     configFileName: "docugen.json",
     prefix: `### File:`,
     space: ` `,
@@ -32337,186 +32338,49 @@ class DocuGen {
         }
         this.ISecretProvider = ISecretProvider;
     }
-    async generateDocumentation(workspacePath, excludeItemsFilePaths, excludeExtensionsFilePaths, itemsToBeIncludedFilePaths, documentationFilePath, modelEndpoint, modelName, modelVersion, modelProvider) {
+    async *generateDocumentation(workspacePath, excludeItemsFilePaths, itemsToBeIncludedFilePaths, modelEndpoint, modelName, modelVersion, modelProvider) {
         try {
             console.log('Scanning repository:', workspacePath);
-            const fileExists = await this.checkIfFileExists(workspacePath, documentationFilePath);
-            console.log('Document file exists:', fileExists);
-            let documentation = '';
-            if (fileExists === false && itemsToBeIncludedFilePaths !== undefined && itemsToBeIncludedFilePaths.length > 0) {
-                documentation = await this.generateDocumentationForFiles(workspacePath, itemsToBeIncludedFilePaths, modelProvider, modelEndpoint, modelName, modelVersion);
-            }
-            else if (itemsToBeIncludedFilePaths !== undefined && itemsToBeIncludedFilePaths.length > 0) {
-                documentation = await this.updateExistingDocumentation(workspacePath, documentationFilePath, excludeExtensionsFilePaths, itemsToBeIncludedFilePaths, modelProvider, modelEndpoint, modelName, modelVersion);
-            }
-            else {
+            if (!itemsToBeIncludedFilePaths?.length) {
                 throw new Error("No files to be included in documentation.");
             }
-            if (documentation.length > 0) {
-                return documentation;
-            }
-            else {
-                throw new Error("Unable to generate documentation");
-            }
+            yield* this.generateDocumentationForFiles(workspacePath, itemsToBeIncludedFilePaths, modelProvider, modelEndpoint, modelName, modelVersion);
         }
         catch (exception) {
             console.log("Error received -" + exception);
             throw exception;
         }
     }
-    async updateExistingDocumentation(workspacePath, documentationFilePath, excludeExtensionsFilePaths, itemsToBeIncludedFilePaths, modelProvider, modelEndpoint, modelName, modelVersion) {
-        // Read the file & split in sections based on '### File:' format
-        let fileContent = await this.readDocumentationFileContent(workspacePath, documentationFilePath);
-        if (!fileContent) {
-            return;
-        }
-        if (itemsToBeIncludedFilePaths !== undefined) {
-            // Split the file content by sections using regex for more precise matching
-            let sections = fileContent.split(/### File:/);
-            let crossCheckSectionsAgainstIncludedItems = [];
-            let filePathsInFile = [];
-            for (let i = 1; i < sections.length; i++) {
-                const section = sections[i];
-                // Use regex to find section start and end
-                const regex = /^(.*?\\[\w\s]+(?:\\[\w\s]+)*\.\w+)\n([\s\S]*)/;
-                const match = regex.exec(section);
-                let filePath = '';
-                let content = '';
-                if (match) {
-                    filePath = match[1].trim(); // Extract the file path
-                    content = match[2].trim(); // Extract the content after the file path
-                }
-                else {
-                    filePath = section.split(constants_1.Constants.newLine)[0].trim();
-                    content = section.split(filePath)[1].trim();
-                }
-                const fileName = this.getFileNameFromPath(filePath);
-                // Track the file paths in the current content
-                filePathsInFile.push(filePath);
-                const isIncluded = itemsToBeIncludedFilePaths.includes(filePath) && !excludeExtensionsFilePaths.includes(filePath);
-                crossCheckSectionsAgainstIncludedItems.push({
-                    fileName: fileName,
-                    filePath: filePath,
-                    section: section,
-                    toBeAnalysed: isIncluded,
-                    appendAtEnd: false
-                });
-            }
-            // Handle files to be added if not already present
-            for (const item of this.excludeInvalidFiles(itemsToBeIncludedFilePaths)) {
-                if (item !== undefined && !crossCheckSectionsAgainstIncludedItems.some(x => x.filePath === item)) {
-                    crossCheckSectionsAgainstIncludedItems.push({
-                        fileName: this.getFileNameFromPath(item),
-                        filePath: item,
-                        section: '',
-                        toBeAnalysed: true,
-                        appendAtEnd: true
-                    });
-                }
-            }
-            // Process each section and analyze or append content
-            for (const item of crossCheckSectionsAgainstIncludedItems) {
-                const { filePath, fileName, section, toBeAnalysed, appendAtEnd } = item;
-                if (toBeAnalysed) {
-                    const originalFileContent = await this.readFileContent(workspacePath + filePath);
-                    if (originalFileContent.length > 0) {
-                        let updatedContent = '';
-                        try {
-                            updatedContent = await new providers_1.Providers(this.ISecretProvider).sendRequestToModel(this.getSummaryPrompt(), originalFileContent, modelProvider, modelEndpoint, modelName, modelVersion);
-                        }
-                        catch (error) {
-                            console.log(error);
-                            updatedContent = "`Unable to generate documentation. Please try again later.`";
-                        }
-                        if (updatedContent.length > 0) {
-                            let finalContent = this.formContentInFormat(filePath, updatedContent);
-                            if (appendAtEnd) {
-                                // Append new content to the end if not present
-                                fileContent += finalContent;
-                            }
-                            else {
-                                const filePathIndex = fileContent.indexOf(this.formFilePathWithPrefix(filePath)); // Index of the start of the file path
-                                const contentStartIndex = filePathIndex; // Index of the start of the content
-                                const contentEndIndex = (fileContent.indexOf(constants_1.Constants.prefix + section) + section.length) + constants_1.Constants.suffix.length + 1; // End index
-                                if (contentStartIndex === -1 || contentEndIndex === -1) {
-                                    continue; // Skip if section boundaries are invalid
-                                }
-                                // Replace the old content in the section
-                                fileContent = fileContent.slice(0, contentStartIndex) +
-                                    finalContent +
-                                    fileContent.slice(contentEndIndex);
-                            }
-                        }
-                        else {
-                            throw new Error("Unable to generate documentation");
-                        }
+    async *generateDocumentationForFiles(workspacePath, files, modelProvider, modelEndpoint, modelName, modelVersion) {
+        console.log('Generating documentation for files:', files);
+        for (const file of this.excludeInvalidFiles(files)) {
+            if (file) {
+                const filePath = path.join(workspacePath, file);
+                console.log('Generating documentation for current file: ', filePath);
+                const document = fs.readFileSync(filePath.trim(), 'utf8');
+                if (document.length > 0) {
+                    try {
+                        const summary = await new providers_1.Providers(this.ISecretProvider)
+                            .sendRequestToModel(this.getSummaryPrompt(), document, modelProvider, modelEndpoint, modelName, modelVersion);
+                        yield {
+                            filePath: file,
+                            content: this.formContentInFormat(file, summary)
+                        };
+                    }
+                    catch (error) {
+                        console.error(`Error processing ${file}:`, error);
+                        yield { filePath: '', content: this.formContentInFormat(file, 'Unable to generate documentation! Please try again later.') };
                     }
                 }
             }
-            return fileContent;
         }
     }
+    // ... (rest of the utility methods remain the same)
     formFilePathWithPrefix(filePath) {
         return `${constants_1.Constants.prefix}${constants_1.Constants.space}${filePath}`;
     }
     formContentInFormat(filePath, content) {
         return `${this.formFilePathWithPrefix(filePath)}${constants_1.Constants.newLine}${content}${constants_1.Constants.suffix}`;
-    }
-    getFileNameFromPath(filePath) {
-        try {
-            const fileName = path.basename(filePath);
-            return fileName;
-        }
-        catch (error) {
-            throw error;
-        }
-    }
-    async readFileContent(filePath) {
-        try {
-            const data = await fs.promises.readFile(filePath.trim(), 'utf8');
-            return data;
-        }
-        catch (error) {
-            throw error;
-        }
-    }
-    async readDocumentationFileContent(workspaceFolder, filePath) {
-        try {
-            filePath = path.join(workspaceFolder, filePath);
-            console.log('Reading file:', filePath);
-            const data = await fs.promises.readFile(filePath.trim(), 'utf8');
-            return data;
-        }
-        catch (error) {
-            throw error;
-        }
-    }
-    async checkIfFileExists(workspaceFolder, filePath) {
-        try {
-            filePath = path.join(workspaceFolder, filePath);
-            await fs.promises.readFile(filePath.trim());
-            return true;
-        }
-        catch (error) {
-            return false;
-        }
-    }
-    async generateDocumentationForFiles(workspacePath, files, modelProvider, modelEndpoint, modelName, modelVersion) {
-        let fileDocumentation = constants_1.Constants.fileTitle;
-        console.log('Generating documentation for files:', files);
-        for (const file of this.excludeInvalidFiles(files)) {
-            if (file !== undefined) {
-                const filePath = path.join(workspacePath, file);
-                console.log('Generating documentation for current file: ', filePath);
-                const document = fs.readFileSync(filePath.trim(), 'utf8');
-                console.log('file content:', document);
-                // Generate a summary for each file's content
-                const summary = await new providers_1.Providers(this.ISecretProvider).sendRequestToModel(this.getSummaryPrompt(), document, modelProvider, modelEndpoint, modelName, modelVersion);
-                console.log('Summary generated');
-                fileDocumentation += this.formContentInFormat(file, summary);
-            }
-        }
-        return fileDocumentation;
     }
     excludeInvalidFiles(files) {
         return files.filter(x => x !== undefined && path.extname(x) !== '');
@@ -32593,7 +32457,7 @@ var ModelProviderEnums;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.SectionConfig = exports.ModelProviderEnums = exports.Enums = exports.Constants = exports.Providers = exports.DocuGen = void 0;
+exports.FileContentProvider = exports.SectionConfig = exports.ModelProviderEnums = exports.Enums = exports.Constants = exports.Providers = exports.DocuGen = void 0;
 var docugen_1 = __nccwpck_require__(8525);
 Object.defineProperty(exports, "DocuGen", ({ enumerable: true, get: function () { return docugen_1.DocuGen; } }));
 var providers_1 = __nccwpck_require__(9970);
@@ -32605,6 +32469,8 @@ Object.defineProperty(exports, "Enums", ({ enumerable: true, get: function () { 
 Object.defineProperty(exports, "ModelProviderEnums", ({ enumerable: true, get: function () { return enums_1.ModelProviderEnums; } }));
 var SectionConfig_1 = __nccwpck_require__(9902);
 Object.defineProperty(exports, "SectionConfig", ({ enumerable: true, get: function () { return SectionConfig_1.SectionConfig; } }));
+var FileContentProvider_1 = __nccwpck_require__(2539);
+Object.defineProperty(exports, "FileContentProvider", ({ enumerable: true, get: function () { return FileContentProvider_1.FileContentProvider; } }));
 
 
 /***/ }),
@@ -32735,6 +32601,151 @@ class Providers {
     }
 }
 exports.Providers = Providers;
+
+
+/***/ }),
+
+/***/ 2539:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.FileContentProvider = void 0;
+const constants_1 = __nccwpck_require__(7205);
+const fs = (__nccwpck_require__(9896).promises);
+const readline = __nccwpck_require__(3785);
+class FileContentProvider {
+    title = "DocuGen AI";
+    description = constants_1.Constants.extensionTagLine;
+    documentHeader;
+    constructor() {
+        this.documentHeader = {
+            title: this.title,
+            description: this.description
+        };
+    }
+    generateHeaderContent() {
+        return `# ${this.documentHeader.title}\n\n*${this.documentHeader.description}*\n\n`;
+    }
+    async updateFileContent(targetFilePath, tempFilePath, filePaths) {
+        const tempContent = await this.readAndParseContent(tempFilePath);
+        const processedPaths = new Set();
+        // Check if the target file exists
+        let fileExists = true;
+        try {
+            await fs.access(targetFilePath);
+        }
+        catch {
+            fileExists = false;
+        }
+        // If the target file doesn't exist, create it with header and new content
+        if (!fileExists) {
+            const newContent = this.generateHeaderContent() + Object.values(tempContent).join('\n');
+            await fs.writeFile(targetFilePath, newContent);
+            return;
+        }
+        // Process the target file in chunks
+        let { updatedContent, hasHeader } = await this.processFileInChunks(targetFilePath, tempContent, filePaths, processedPaths);
+        // Only add header if it doesn't exist
+        if (!hasHeader) {
+            updatedContent = this.generateHeaderContent() + updatedContent;
+        }
+        // Append any new unmatched sections at the end
+        const appendContent = await this.getUnprocessedContent(tempContent, filePaths, processedPaths);
+        if (appendContent) {
+            if (updatedContent && !updatedContent.endsWith('\n\n')) {
+                updatedContent += '\n\n';
+            }
+            updatedContent += appendContent;
+        }
+        await fs.writeFile(targetFilePath, updatedContent);
+    }
+    async readAndParseContent(filePath) {
+        const content = await fs.readFile(filePath, 'utf8');
+        const sections = {};
+        const parts = content.split(/(?=### File:)/);
+        for (const part of parts) {
+            if (part.trim()) {
+                const match = part.match(/### File: (.*?)\n/);
+                if (match) {
+                    const filePath = match[1].trim();
+                    sections[filePath] = part;
+                }
+            }
+        }
+        return sections;
+    }
+    getUnprocessedContent(tempContent, filePaths, processedPaths) {
+        let appendContent = '';
+        for (const filePath of filePaths) {
+            if (!processedPaths.has(filePath) && tempContent[filePath]) {
+                appendContent += tempContent[filePath] + '\n';
+            }
+        }
+        return appendContent;
+    }
+    async processFileInChunks(filePath, newContent, filePaths, processedPaths) {
+        const fileStream = (__nccwpck_require__(9896).createReadStream)(filePath);
+        const rl = readline.createInterface({
+            input: fileStream,
+            crlfDelay: Infinity
+        });
+        let currentSection = '';
+        let currentFilePath = '';
+        let output = '';
+        let isProcessingSection = false;
+        let hasHeader = false;
+        let isHeaderSection = false;
+        let lineCount = 0;
+        for await (const line of rl) {
+            lineCount++;
+            // Check for header in first few lines
+            if (lineCount <= 2) {
+                if (line.startsWith(`# ${this.title}`) ||
+                    line.includes(this.description)) {
+                    isHeaderSection = true;
+                    hasHeader = true;
+                }
+            }
+            // If we're in header section, include it as-is
+            if (isHeaderSection) {
+                output += line + '\n';
+                if (line.trim() === '') {
+                    isHeaderSection = false;
+                }
+                continue;
+            }
+            if (line.startsWith(constants_1.Constants.prefix)) {
+                if (currentSection) {
+                    output += this.processSection(currentFilePath, currentSection, newContent, filePaths, processedPaths);
+                    currentSection = '';
+                }
+                currentFilePath = line.replace(constants_1.Constants.prefix, '').trim();
+                isProcessingSection = true;
+                currentSection = line + '\n';
+            }
+            else if (isProcessingSection) {
+                currentSection += line + '\n';
+            }
+            else {
+                output += line + '\n';
+            }
+        }
+        if (currentSection) {
+            output += this.processSection(currentFilePath, currentSection, newContent, filePaths, processedPaths);
+        }
+        return { updatedContent: output, hasHeader };
+    }
+    processSection(filePath, currentSection, newContent, filePaths, processedPaths) {
+        if (filePaths.includes(filePath) && newContent[filePath]) {
+            processedPaths.add(filePath);
+            return newContent[filePath] + '\n';
+        }
+        return currentSection;
+    }
+}
+exports.FileContentProvider = FileContentProvider;
 
 
 /***/ }),
@@ -32877,7 +32888,7 @@ async function run() {
                     }
                     const changedFiles = (0, providers_1.removeDuplicates)(await (0, providers_1.getPRFiles)(pullRequest, octokit, owner, repo, context));
                     core.info('Changed files: ' + changedFiles);
-                    const allFiles = (0, providers_1.getItemsRecursively)(excludedItems, workspaceFsPath, isInitialRun, changedFiles);
+                    const allFiles = (0, providers_1.getItemsRecursively)(excludedItems, workspaceFsPath, isInitialRun, changedFiles, supportedExtensions);
                     if (allFiles.includes('.gitignore')) {
                         (0, providers_1.getGitIgnoreItems)(workspaceFsPath, excludedItems);
                     }
@@ -32904,13 +32915,26 @@ async function run() {
                     const modelProvider = core.getInput('modelProvider');
                     const documentationFilePath = sectionConfig.values.defaultDocumentFileName + defaultExtension;
                     const workspaceDocumentationFilePath = workspacePathPrefix + documentationFilePath;
-                    const documentation = await new docugen_1.DocuGen((0, providers_1.getSecretProvider)()).generateDocumentation(workspacePathPrefix, excludedItems, supportedExtensions, itemsToBeIncluded, documentationFilePath, modelEndpoint, modelName, modelVersion, modelProvider);
+                    const tempFilePath = workspacePathPrefix + 'docugen-temp.md';
+                    (0, writefile_1.writeFileSync)(tempFilePath, '');
+                    const docuGen = new docugen_1.DocuGen((0, providers_1.getSecretProvider)());
+                    const chunkFilePaths = [];
+                    for (const file of itemsToBeIncluded) {
+                        for await (const chunk of docuGen.generateDocumentation(workspacePathPrefix, excludedItems, [file], modelEndpoint, modelName, modelVersion, modelProvider)) {
+                            if (chunk.content) {
+                                await (0, writefile_1.appendToTempFile)(tempFilePath, chunk.content);
+                            }
+                            chunkFilePaths.push(chunk.filePath);
+                        }
+                    }
+                    const fileContentProvider = new docugen_1.FileContentProvider();
+                    await fileContentProvider.updateFileContent(workspaceDocumentationFilePath, tempFilePath, chunkFilePaths);
+                    await (0, writefile_1.deleteTempFile)(tempFilePath);
                     sectionConfig.values.includedItems = '';
                     sectionConfig.values.uncheckedItems = (0, providers_1.removeDuplicates)(sectionConfig.values.uncheckedItems
                         .split(',')
                         .concat(itemsToBeIncluded)).join();
                     (0, writefile_1.updateConfigFile)(configFilePath, sectionConfig);
-                    (0, writefile_1.writeContentToFile)(workspaceDocumentationFilePath, documentation);
                     await (0, writefile_1.commitDocumentationChanges)([
                         documentationFilePath,
                         configFilePath
@@ -33288,17 +33312,17 @@ function getSupportedExtensions(supportedExtensions = docugen_1.Constants.suppor
         .filter(x => x.trim() !== ''));
 }
 // Function to get all directories and files recursively
-function getItemsRecursively(excludedItems, source, isInitialRun, changedFiles, parent = '') {
+function getItemsRecursively(excludedItems, source, isInitialRun, changedFiles, supportedExtensions, parent = '') {
     try {
         const items = isInitialRun ? fs.readdirSync(source) : changedFiles;
         const filteredItems = removeDuplicates(items.filter(x => !excludedItems.includes(x)));
-        return validateFiles(filteredItems, excludedItems, source, parent, isInitialRun, changedFiles);
+        return validateFiles(filteredItems, excludedItems, source, parent, isInitialRun, changedFiles, supportedExtensions);
     }
     catch (err) {
         throw Error(`Error reading directories: ${err}`);
     }
 }
-function validateFiles(filteredItems, excludedItems, source, parent, isInitialRun, changedFiles) {
+function validateFiles(filteredItems, excludedItems, source, parent, isInitialRun, changedFiles, supportedExtensions) {
     let itemsList = [];
     for (const item of filteredItems) {
         // Exclude items starting with a dot ('.')
@@ -33314,14 +33338,14 @@ function validateFiles(filteredItems, excludedItems, source, parent, isInitialRu
                 // Add the directory to the list
                 itemsList.push(relativePath);
                 // Recursively get subdirectories and files
-                itemsList = itemsList.concat(getItemsRecursively(excludedItems, fullPath, isInitialRun, changedFiles, relativePath));
+                itemsList = itemsList.concat(getItemsRecursively(excludedItems, fullPath, isInitialRun, changedFiles, supportedExtensions, relativePath));
             }
             else {
                 // Add the file to the list
                 const ext = path_1.default.extname(item).toLowerCase();
                 if (ext.length > 0) {
                     // Exclude non-standard file types
-                    const isSupported = isSupportedExtFile(ext);
+                    const isSupported = isSupportedExtFile(supportedExtensions, ext);
                     if (isSupported === true) {
                         // Add the file to the list
                         itemsList.push(relativePath);
@@ -33361,8 +33385,8 @@ function getGitIgnoreItems(workspaceFsPath, excludedItems) {
     return excludedItems;
 }
 // Function to determine if a file extension should be excluded
-function isSupportedExtFile(extension) {
-    return getSupportedExtensions().includes(extension);
+function isSupportedExtFile(supportedExtensions, extension) {
+    return getSupportedExtensions(supportedExtensions).includes(extension);
 }
 function getSecretProvider() {
     return new githubActionSecretProvider_1.GitHubActionSecretProvider();
@@ -33406,6 +33430,9 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.commitDocumentationChanges = commitDocumentationChanges;
 exports.writeContentToFile = writeContentToFile;
 exports.writeConfigFile = writeConfigFile;
+exports.writeFileSync = writeFileSync;
+exports.appendToTempFile = appendToTempFile;
+exports.deleteTempFile = deleteTempFile;
 exports.updateConfigFile = updateConfigFile;
 const core = __importStar(__nccwpck_require__(7484));
 const fs = __importStar(__nccwpck_require__(9896));
@@ -33466,6 +33493,28 @@ function writeConfigFile(filePath, sections) {
     }
     else {
         throw new Error('Sections are undefined');
+    }
+}
+function writeFileSync(filePath, content) {
+    fs.writeFileSync(filePath, content, 'utf-8');
+}
+async function appendToTempFile(tempFilePath, content) {
+    try {
+        await fs.promises.appendFile(tempFilePath, content);
+    }
+    catch (error) {
+        console.error('Error appending to temporary file:', error);
+        throw error;
+    }
+}
+async function deleteTempFile(tempFilePath) {
+    try {
+        if (fs.existsSync(tempFilePath)) {
+            await fs.promises.unlink(tempFilePath);
+        }
+    }
+    catch (error) {
+        console.error('Error cleaning up temporary file:', error);
     }
 }
 function updateConfigFile(filePath, section) {
@@ -33671,6 +33720,14 @@ module.exports = require("perf_hooks");
 
 "use strict";
 module.exports = require("querystring");
+
+/***/ }),
+
+/***/ 3785:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("readline");
 
 /***/ }),
 
