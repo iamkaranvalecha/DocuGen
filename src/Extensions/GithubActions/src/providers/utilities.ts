@@ -148,7 +148,7 @@ function validateFiles(
             isInitialRun,
             changedFiles,
             supportedExtensions,
-            relativePath,
+            relativePath
           )
         )
       } else {
@@ -204,7 +204,10 @@ export function getGitIgnoreItems(
 }
 
 // Function to determine if a file extension should be excluded
-function isSupportedExtFile(supportedExtensions: string[], extension: string): boolean {
+function isSupportedExtFile(
+  supportedExtensions: string[],
+  extension: string
+): boolean {
   return getSupportedExtensions(supportedExtensions).includes(extension)
 }
 
