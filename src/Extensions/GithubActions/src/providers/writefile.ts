@@ -69,6 +69,32 @@ export function writeConfigFile(filePath: string, sections: SectionConfig[]) {
   }
 }
 
+export function writeFileSync(filePath: string, content: string) {
+  fs.writeFileSync(filePath, content, 'utf-8')
+}
+
+export async function appendToTempFile(
+  tempFilePath: string,
+  content: string
+): Promise<void> {
+  try {
+    await fs.promises.appendFile(tempFilePath, content)
+  } catch (error) {
+    console.error('Error appending to temporary file:', error)
+    throw error
+  }
+}
+
+export async function deleteTempFile(tempFilePath: string): Promise<void> {
+  try {
+    if (fs.existsSync(tempFilePath)) {
+      await fs.promises.unlink(tempFilePath)
+    }
+  } catch (error) {
+    console.error('Error cleaning up temporary file:', error)
+  }
+}
+
 export function updateConfigFile(filePath: string, section: SectionConfig) {
   if (section !== undefined) {
     if (fs.existsSync(filePath)) {
