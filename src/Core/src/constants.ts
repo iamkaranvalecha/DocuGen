@@ -1,5 +1,6 @@
 export const Constants = {
   extensionName: "DocuGen",
+  extensionTagLine: "Shifting from Manual to Automated Documentation",
   configFileName: "docugen.json",
   prefix: `### File:`,
   space: ` `,

@@ -2,7 +2,7 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 import * as fs from 'fs';
-import { DocuGen, Constants as DocuGenConstants, Enums, SectionConfig, ModelProviderEnums } from 'docugen';
+import { DocuGen, Constants as DocuGenConstants, Enums, SectionConfig, ModelProviderEnums, FileContentProvider } from 'docugen';
 import path from 'path';
 import { VSCodeSecretProvider } from './providers/VSCodeSecretProvider';
 const defaultExtension: string = '.md';
@@ -159,11 +159,24 @@ export function activate(context: vscode.ExtensionContext) {
 
 							vscode.window.withProgress({
 								location: vscode.ProgressLocation.Notification,
-								title: "DocuGen AI: ",
+								title: "DocuGen AI",
+								cancellable: true
 							}, async (progress, token) => {
-								try {
-									progress.report({ message: "Generating documentation for selected files..." });
+								// Initialize an empty temporary file
+								const tempFilePath = workspacePathPrefix + 'docugen-temp.md';
+								await fs.promises.writeFile(tempFilePath, '');
 
+								const abortController = new AbortController();
+								const abortSignal = abortController.signal;
+
+								token.onCancellationRequested(async () => {
+									console.log("User canceled the operation - Aborting...");
+									abortController.abort(); // Signal all async tasks to abort
+									await deleteTempFile(tempFilePath); // Clean up temporary resources
+									return;
+								});
+
+								try {
 									const workspaceSettings = vscode.workspace.getConfiguration(extensionName);
 									const modelEndpoint = workspaceSettings.get('modelEndpoint') as string;
 									const modelName = workspaceSettings.get('modelName') as string;
@@ -172,32 +185,64 @@ export function activate(context: vscode.ExtensionContext) {
 									const documentationFilePath = sectionConfig.values.defaultDocumentFileName + defaultExtension;
 									const workspaceDocumentationFilePath = workspacePathPrefix + documentationFilePath;
 
-									const documentation = await new DocuGen(secretProvider)
-										.generateDocumentation(
+									const tempFilePath = workspacePathPrefix + 'docugen-temp.md';
+									await fs.promises.writeFile(tempFilePath, '');
+
+									const docuGen = new DocuGen(secretProvider);
+									const chunkFilePaths: string[] = [];
+
+									for (const file of itemsToBeIncluded) {
+										if (abortSignal.aborted) { return; }; // Stop immediately if aborted
+
+										progress.report({ message: `Analyzing ${file}...` });
+
+										for await (const chunk of docuGen.generateDocumentation(
 											workspacePathPrefix,
 											excludedItems,
-											supportedExtensions,
-											itemsToBeIncluded,
-											documentationFilePath,
+											[file],
 											modelEndpoint,
 											modelName,
 											modelVersion,
 											modelProvider
-										);
+										)) {
+											if (abortSignal.aborted) { return; }; // Exit loop immediately if aborted
 
-									await writeToFile(documentation, workspaceDocumentationFilePath);
+											progress.report({ message: `Documentation generated for ${chunk.filePath}` });
+
+											if (chunk.content) {
+												await appendToTempFile(tempFilePath, chunk.content);
+											}
+											chunkFilePaths.push(chunk.filePath);
+										}
+									}
+
+									if (abortSignal.aborted) { return; }; // Final check before file update
+
+									progress.report({ message: "Updating the documentation file" });
+									const fileContentProvider = new FileContentProvider();
+									await fileContentProvider.updateFileContent(
+										workspaceDocumentationFilePath,
+										tempFilePath,
+										chunkFilePaths
+									);
+
+									await deleteTempFile(tempFilePath);
 
 									sectionConfig.values.includedItems = "";
-									sectionConfig.values.uncheckedItems = removeDuplicates(sectionConfig.values.uncheckedItems.split(',').concat(itemsToBeIncluded)).join();
-
+									sectionConfig.values.uncheckedItems = removeDuplicates(
+										sectionConfig.values.uncheckedItems.split(',').concat(itemsToBeIncluded)
+									).join();
 									updateConfigFile(configFilePath, sectionConfig);
 
 									vscode.commands.executeCommand('vscode.open', vscode.Uri.file(workspaceDocumentationFilePath));
-
 									progress.report({ message: "Please verify the documentation" });
 
 								} catch (error) {
-									vscode.window.showErrorMessage(`DocuGen: ${error}`);
+									if (abortSignal.aborted) {
+										console.log("Operation aborted by user.");
+									} else {
+										vscode.window.showErrorMessage(`DocuGen: ${error}`);
+									}
 								}
 							});
 						} else {
@@ -248,7 +293,44 @@ function validModelConfig(modelEndpoint: string, modelName: string, modelVersion
 
 }
 
-async function writeToFile(content: string, filePath: string) {
+async function appendToTempFile(tempFilePath: string, content: string): Promise<void> {
+	try {
+		await fs.promises.appendFile(tempFilePath, content);
+	} catch (error) {
+		console.error('Error appending to temporary file:', error);
+		throw error;
+	}
+}
+
+async function deleteTempFile(tempFilePath: string): Promise<void> {
+	try {
+		if (fs.existsSync(tempFilePath)) {
+			await fs.promises.unlink(tempFilePath);
+		}
+	} catch (error) {
+		console.error('Error cleaning up temporary file:', error);
+	}
+}
+
+async function checkIfFileExists(filePath: string): Promise<boolean> {
+	try {
+		await fs.promises.readFile(filePath.trim());
+		return true;
+	} catch (error) {
+		return false;
+	}
+}
+
+async function readFile(filePath: string): Promise<string> {
+	try {
+		return await fs.promises.readFile(filePath, 'utf8');
+	} catch (error) {
+		console.error('Error reading file:', error);
+		throw error;
+	}
+}
+
+async function updateDocumentationWithNewContent(content: string, filePath: string) {
 	try {
 		// Check if the directory exists
 		if (!fs.existsSync(path.dirname(filePath))) {
