@@ -32909,36 +32909,41 @@ async function run() {
                     sectionConfig.values.supportedExtensions = supportedExtensions.join();
                     (0, writefile_1.updateConfigFile)(configFilePath, sectionConfig);
                     core.info('Generating documentation for selected files...' + itemsToBeIncluded);
-                    const modelEndpoint = core.getInput('modelEndpoint');
-                    const modelName = core.getInput('modelName');
-                    const modelVersion = core.getInput('modelVersion');
-                    const modelProvider = core.getInput('modelProvider');
-                    const documentationFilePath = sectionConfig.values.defaultDocumentFileName + defaultExtension;
-                    const workspaceDocumentationFilePath = workspacePathPrefix + documentationFilePath;
-                    const tempFilePath = workspacePathPrefix + 'docugen-temp.md';
-                    (0, writefile_1.writeFileSync)(tempFilePath, '');
-                    const docuGen = new docugen_1.DocuGen((0, providers_1.getSecretProvider)());
-                    const chunkFilePaths = [];
-                    for (const file of itemsToBeIncluded) {
-                        for await (const chunk of docuGen.generateDocumentation(workspacePathPrefix, excludedItems, [file], modelEndpoint, modelName, modelVersion, modelProvider)) {
-                            if (chunk.content) {
-                                await (0, writefile_1.appendToTempFile)(tempFilePath, chunk.content);
+                    if (itemsToBeIncluded.length > 0) {
+                        const modelEndpoint = core.getInput('modelEndpoint');
+                        const modelName = core.getInput('modelName');
+                        const modelVersion = core.getInput('modelVersion');
+                        const modelProvider = core.getInput('modelProvider');
+                        const documentationFilePath = sectionConfig.values.defaultDocumentFileName + defaultExtension;
+                        const workspaceDocumentationFilePath = workspacePathPrefix + documentationFilePath;
+                        const tempFilePath = workspacePathPrefix + 'docugen-temp.md';
+                        (0, writefile_1.writeFileSync)(tempFilePath, '');
+                        const docuGen = new docugen_1.DocuGen((0, providers_1.getSecretProvider)());
+                        const chunkFilePaths = [];
+                        for (const file of itemsToBeIncluded) {
+                            for await (const chunk of docuGen.generateDocumentation(workspacePathPrefix, excludedItems, [file], modelEndpoint, modelName, modelVersion, modelProvider)) {
+                                if (chunk.content) {
+                                    await (0, writefile_1.appendToTempFile)(tempFilePath, chunk.content);
+                                }
+                                chunkFilePaths.push(chunk.filePath);
                             }
-                            chunkFilePaths.push(chunk.filePath);
                         }
+                        const fileContentProvider = new docugen_1.FileContentProvider();
+                        await fileContentProvider.updateFileContent(workspaceDocumentationFilePath, tempFilePath, chunkFilePaths);
+                        await (0, writefile_1.deleteTempFile)(tempFilePath);
+                        sectionConfig.values.includedItems = '';
+                        sectionConfig.values.uncheckedItems = (0, providers_1.removeDuplicates)(sectionConfig.values.uncheckedItems
+                            .split(',')
+                            .concat(itemsToBeIncluded)).join();
+                        (0, writefile_1.updateConfigFile)(configFilePath, sectionConfig);
+                        await (0, writefile_1.commitDocumentationChanges)([
+                            documentationFilePath,
+                            configFilePath
+                        ]);
                     }
-                    const fileContentProvider = new docugen_1.FileContentProvider();
-                    await fileContentProvider.updateFileContent(workspaceDocumentationFilePath, tempFilePath, chunkFilePaths);
-                    await (0, writefile_1.deleteTempFile)(tempFilePath);
-                    sectionConfig.values.includedItems = '';
-                    sectionConfig.values.uncheckedItems = (0, providers_1.removeDuplicates)(sectionConfig.values.uncheckedItems
-                        .split(',')
-                        .concat(itemsToBeIncluded)).join();
-                    (0, writefile_1.updateConfigFile)(configFilePath, sectionConfig);
-                    await (0, writefile_1.commitDocumentationChanges)([
-                        documentationFilePath,
-                        configFilePath
-                    ]);
+                    else {
+                        core.info('No eligible files found to generate documentation.');
+                    }
                 }
             }
             core.setOutput('time', 'Process completed on ' + new Date().toTimeString());

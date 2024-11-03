@@ -233,7 +233,6 @@ export async function run(): Promise<void> {
           )
 
           if (itemsToBeIncluded.length > 0) {
-
             const modelEndpoint = core.getInput('modelEndpoint') as string
             const modelName = core.getInput('modelName')
             const modelVersion = core.getInput('modelVersion')
@@ -291,8 +290,7 @@ export async function run(): Promise<void> {
               documentationFilePath,
               configFilePath
             ])
-          }
-          else{
+          } else {
             core.info('No eligible files found to generate documentation.')
           }
         }
