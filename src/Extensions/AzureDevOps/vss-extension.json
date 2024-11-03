@@ -1,0 +1,35 @@
+{
+  "manifestVersion": 1,
+  "id": "docugenai",
+  "name": "Docugen AI",
+  "version": "0.0.1",
+  "publisher": "DocugenAI",
+  "targets": [
+    {
+      "id": "Microsoft.VisualStudio.Services"
+    }
+  ],
+  "description": "Docugen AI.",
+  "categories": ["Azure Pipelines"],
+  "icons": {
+    "default": "images/icon.png"
+  },
+  "files": [
+    {
+      "path": "buildandreleasetask"
+    },
+    {
+      "path": "devops-task/index.js"
+    }
+  ],
+  "contributions": [
+    {
+      "id": "custom-build-release-task",
+      "type": "ms.vss-distributed-task.task",
+      "targets": ["ms.vss-distributed-task.tasks"],
+      "properties": {
+        "name": "buildandreleasetask"
+      }
+    }
+  ]
+}

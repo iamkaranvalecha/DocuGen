@@ -1,0 +1,1 @@
+npm i -g tfx-cli && npm install -g azure-devops-extension-sdk
