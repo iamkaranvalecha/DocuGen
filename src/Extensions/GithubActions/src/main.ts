@@ -232,62 +232,69 @@ export async function run(): Promise<void> {
             'Generating documentation for selected files...' + itemsToBeIncluded
           )
 
-          const modelEndpoint = core.getInput('modelEndpoint') as string
-          const modelName = core.getInput('modelName')
-          const modelVersion = core.getInput('modelVersion')
-          const modelProvider = core.getInput(
-            'modelProvider'
-          ) as ModelProviderEnums
-          const documentationFilePath =
-            sectionConfig.values.defaultDocumentFileName + defaultExtension
-          const workspaceDocumentationFilePath =
-            workspacePathPrefix + documentationFilePath
+          if (itemsToBeIncluded.length > 0) {
 
-          const tempFilePath = workspacePathPrefix + 'docugen-temp.md'
-          writeFileSync(tempFilePath, '')
+            const modelEndpoint = core.getInput('modelEndpoint') as string
+            const modelName = core.getInput('modelName')
+            const modelVersion = core.getInput('modelVersion')
+            const modelProvider = core.getInput(
+              'modelProvider'
+            ) as ModelProviderEnums
 
-          const docuGen = new DocuGen(getSecretProvider())
-          const chunkFilePaths: string[] = []
+            const documentationFilePath =
+              sectionConfig.values.defaultDocumentFileName + defaultExtension
+            const workspaceDocumentationFilePath =
+              workspacePathPrefix + documentationFilePath
 
-          for (const file of itemsToBeIncluded) {
-            for await (const chunk of docuGen.generateDocumentation(
-              workspacePathPrefix,
-              excludedItems,
-              [file],
-              modelEndpoint,
-              modelName,
-              modelVersion,
-              modelProvider
-            )) {
-              if (chunk.content) {
-                await appendToTempFile(tempFilePath, chunk.content)
+            const tempFilePath = workspacePathPrefix + 'docugen-temp.md'
+            writeFileSync(tempFilePath, '')
+
+            const docuGen = new DocuGen(getSecretProvider())
+            const chunkFilePaths: string[] = []
+
+            for (const file of itemsToBeIncluded) {
+              for await (const chunk of docuGen.generateDocumentation(
+                workspacePathPrefix,
+                excludedItems,
+                [file],
+                modelEndpoint,
+                modelName,
+                modelVersion,
+                modelProvider
+              )) {
+                if (chunk.content) {
+                  await appendToTempFile(tempFilePath, chunk.content)
+                }
+                chunkFilePaths.push(chunk.filePath)
               }
-              chunkFilePaths.push(chunk.filePath)
             }
+
+            const fileContentProvider = new FileContentProvider()
+            await fileContentProvider.updateFileContent(
+              workspaceDocumentationFilePath,
+              tempFilePath,
+              chunkFilePaths
+            )
+
+            await deleteTempFile(tempFilePath)
+
+            sectionConfig.values.includedItems = ''
+            sectionConfig.values.uncheckedItems = removeDuplicates(
+              sectionConfig.values.uncheckedItems
+                .split(',')
+                .concat(itemsToBeIncluded)
+            ).join()
+
+            updateConfigFile(configFilePath, sectionConfig)
+
+            await commitDocumentationChanges([
+              documentationFilePath,
+              configFilePath
+            ])
           }
-
-          const fileContentProvider = new FileContentProvider()
-          await fileContentProvider.updateFileContent(
-            workspaceDocumentationFilePath,
-            tempFilePath,
-            chunkFilePaths
-          )
-
-          await deleteTempFile(tempFilePath)
-
-          sectionConfig.values.includedItems = ''
-          sectionConfig.values.uncheckedItems = removeDuplicates(
-            sectionConfig.values.uncheckedItems
-              .split(',')
-              .concat(itemsToBeIncluded)
-          ).join()
-
-          updateConfigFile(configFilePath, sectionConfig)
-
-          await commitDocumentationChanges([
-            documentationFilePath,
-            configFilePath
-          ])
+          else{
+            core.info('No eligible files found to generate documentation.')
+          }
         }
       }
 
