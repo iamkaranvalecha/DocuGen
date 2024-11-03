@@ -138,8 +138,11 @@ __azurite_db*__.json
 node_modules/
 node_modules 
 
+# IDE Specfic
 .vs/
 .vscode/
+/.idea
+
 package-lock.json
 tsconfig.tsbuildinfo
 
