@@ -273,7 +273,7 @@ function validModelConfig(modelEndpoint: string, modelName: string, modelVersion
 		vscode.commands.executeCommand('workbench.action.openWorkspaceSettings', extensionName + '.' + 'modelEndpoint');
 		return false;
 	}
-	else if (!modelEndpoint.includes('https://')) {
+	else if (!modelEndpoint || (!modelEndpoint.startsWith('http://') && !modelEndpoint.startsWith('https://'))) {
 		vscode.window.showErrorMessage("Please define a valid model endpoint to generate documentation.");
 		vscode.commands.executeCommand('workbench.action.openWorkspaceSettings', extensionName + '.' + 'modelEndpoint');
 		return false;
