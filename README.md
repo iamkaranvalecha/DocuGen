@@ -22,9 +22,6 @@
 ✨ Why is this solution different and compelling for the customer?
 - Standardization of documentation across multiple projects throughout the organization provides a greater value addition on daily basis
 
-✨ What business value does your project provide to Microsoft?
-- Attract new users, making current users happy
-
 ✨ Key Features:
 - Automatically generates & updated documentation from your code
 - Summarizes code using OpenAI models or Ollama integration
@@ -36,6 +33,20 @@
 - Generate business logic documentation from multiple repositories
 - DevOps integration for automated document updating
 - Support for Visual Studio and more platforms!
+- Integrations with following providers
+  - Claude
+  - Mistral
+  - Cohere
+  - Groq
+  - DeepSeek
+  - Together AI
+  - Gemini
+  - LM Studio
+  - llama
+  - SambaNova Cloud
+  - Cerebras 
+  - OpenRouter
+
 
 **👩‍💻 Make software development more efficient with instant, consistent code documents, whether you're onboarding, reviewing, or managing projects!**
 
