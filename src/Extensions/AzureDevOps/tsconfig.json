@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "target": "es2022",
+    "module": "commonjs",
+    "rootDir": "../../",
+    "outDir": "./devops-task",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "noImplicitAny": false,
+    "skipDefaultLibCheck": true,
+    "skipLibCheck": true
+  },
+  "include": [
+    "src/**/*", // Include all files in actions/src
+    "../../Core/src/**/*" // Include files from the core/src directory,
+  ],
+  "exclude": [
+    "./dist",
+    "./dist-action",
+    "./node_modules",
+    "./__tests__",
+    "./coverage"
+  ]
+}
