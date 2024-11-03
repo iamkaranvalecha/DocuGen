@@ -318,7 +318,11 @@ function validModelConfig(
   if (modelEndpoint === undefined || modelEndpoint === '') {
     core.setFailed('Please define model endpoint to generate documentation.')
     return false
-  } else if (!modelEndpoint.includes('https://')) {
+  } else if (
+    !modelEndpoint ||
+    (!modelEndpoint.startsWith('http://') &&
+      !modelEndpoint.startsWith('https://'))
+  ) {
     core.setFailed(
       'Please define a valid model endpoint to generate documentation.'
     )
